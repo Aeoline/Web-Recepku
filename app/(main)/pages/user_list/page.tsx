@@ -16,34 +16,44 @@ import { classNames } from 'primereact/utils';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProductService } from '../../../../demo/service/ProductService';
 import { Demo } from '@/types';
+import { firestore } from '@/utils/firebase';
+import { collection, getDocs } from 'firebase/firestore/lite';
+import axios from 'axios';
 
 /* @todo Used 'as any' for types here. Will fix in next version due to onSelectionChange event type issue. */
 const Crud = () => {
-    let emptyProduct: Demo.Product = {
-        id: '',
-        name: '',
-        image: '',
-        description: '',
-        category: '',
-        price: 0,
-        quantity: 0,
-        rating: 0,
-        inventoryStatus: 'USER'
-    };
 
-    const [products, setProducts] = useState(null);
+
+    const [products, setProducts] = useState([]);
     const [productDialog, setProductDialog] = useState(false);
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
     const [deleteProductsDialog, setDeleteProductsDialog] = useState(false);
-    const [product, setProduct] = useState<Demo.Product>(emptyProduct);
+    const [product, setProduct] = useState({} as any);
     const [selectedProducts, setSelectedProducts] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [globalFilter, setGlobalFilter] = useState('');
+    const [searchInput, setSearchInput] = useState('');
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<any>>(null);
+    const [originalProducts, setOriginalProducts] = useState([]);
+    const [radioValue, setRadioValue] = useState(product.isAdmin ? true : false);
 
     useEffect(() => {
-        ProductService.getProducts().then((data) => setProducts(data as any));
+        axios
+            .get('http://localhost:3001/users')
+            .then((res: any) => {
+                const data = res.data.data;
+                setOriginalProducts(data);
+                setProducts(data); // Ganti setProduct menjadi setProducts
+                console.log(data);
+                const firstFood = data[0];
+                console.log(firstFood.uid);
+                console.log(firstFood.email);
+                console.log(firstFood.username);
+            })
+            .catch((error: any) => {
+                console.error(error);
+            });
     }, []);
 
     const formatCurrency = (value: number) => {
@@ -54,7 +64,6 @@ const Crud = () => {
     };
 
     const openNew = () => {
-        setProduct(emptyProduct);
         setSubmitted(false);
         setProductDialog(true);
     };
@@ -75,34 +84,53 @@ const Crud = () => {
     const saveProduct = () => {
         setSubmitted(true);
 
-        if (product.name.trim()) {
+        if (product.username && product.username.trim()) {
             let _products = [...(products as any)];
             let _product = { ...product };
-            if (product.id) {
-                const index = findIndexById(product.id);
-
-                _products[index] = _product;
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Updated',
-                    life: 3000
+            fetch(`http://localhost:3001/users/${product.uid}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: product.username,
+                    email: product.email,
+                    isAdmin: radioValue
+                })
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        const index = findIndexById(product.uid);
+                        _products[index] = _product;
+                        setProducts(_products);
+                        setProductDialog(false);
+                        setProduct('emptyProduct');
+                        toast.current?.show({
+                            severity: 'success',
+                            summary: 'Successful',
+                            detail: 'Product Updated',
+                            life: 3000
+                        });
+                    } else {
+                        throw new Error('Failed to update product');
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to update product',
+                        life: 3000
+                    });
                 });
-            } else {
-                _product.id = createId();
-                _product.image = 'product-placeholder.svg';
-                _products.push(_product);
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Created',
-                    life: 3000
-                });
-            }
-
-            setProducts(_products as any);
-            setProductDialog(false);
-            setProduct(emptyProduct);
+        } else {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Validation Error',
+                detail: 'Fill all the fields',
+                life: 3000
+            });
         }
     };
 
@@ -117,22 +145,45 @@ const Crud = () => {
     };
 
     const deleteProduct = () => {
-        let _products = (products as any)?.filter((val: any) => val.id !== product.id);
-        setProducts(_products);
-        setDeleteProductDialog(false);
-        setProduct(emptyProduct);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Successful',
-            detail: 'Product Deleted',
-            life: 3000
-        });
+        // Mengambil ID produk yang akan dihapus
+        const productId = product.uid;
+
+        // Mengirim permintaan DELETE ke server
+        fetch(`http://localhost:3001/users/${productId}`, {
+            method: 'DELETE'
+        })
+            .then((response) => {
+                if (response.ok) {
+                    // Menghapus produk dari state
+                    const updatedProducts = products.filter((val) => val.uid !== productId);
+                    setProducts(updatedProducts);
+                    setDeleteProductDialog(false);
+                    setProduct('emptyProduct');
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Successful',
+                        detail: 'User Removed',
+                        life: 3000
+                    });
+                } else {
+                    throw new Error('Failed to remove user');
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to remove user',
+                    life: 3000
+                });
+            });
     };
 
-    const findIndexById = (id: string) => {
+    const findIndexById = (uid: string) => {
         let index = -1;
         for (let i = 0; i < (products as any)?.length; i++) {
-            if ((products as any)[i].id === id) {
+            if ((products as any)[i].uid === uid) {
                 index = i;
                 break;
             }
@@ -142,12 +193,12 @@ const Crud = () => {
     };
 
     const createId = () => {
-        let id = '';
+        let uid = '';
         let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         for (let i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
+            uid += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        return id;
+        return uid;
     };
 
     const exportCSV = () => {
@@ -158,23 +209,50 @@ const Crud = () => {
         setDeleteProductsDialog(true);
     };
 
-    const deleteSelectedProducts = () => {
-        let _products = (products as any)?.filter((val: any) => !(selectedProducts as any)?.includes(val));
-        setProducts(_products);
-        setDeleteProductsDialog(false);
-        setSelectedProducts(null);
+    const deleteSelectedProducts = async () => {
+        try {
+            const selectedUserIds = selectedProducts.map((product) => product.uid);
+            // Mengirim permintaan DELETE ke server
+            const response = await fetch(`http://localhost:3001/users/${selectedUserIds.join(',')}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Menghapus produk dari state
+                const updatedProducts = products.filter((val) => !selectedUserIds.includes(val.uid));
+                setProducts(updatedProducts);
+                setDeleteProductDialog(false);
+                setProduct('emptyProduct');
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'User Removed',
+                    life: 3000
+                });
+            } else {
+                throw new Error('Failed to remove user');
+            }
+        } catch (error) {
+            console.log(error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to remove user',
+                life: 3000
+            });
+        }
+
         toast.current?.show({
             severity: 'success',
             summary: 'Successful',
-            detail: 'Products Deleted',
+            detail: 'Users Deleted',
             life: 3000
         });
     };
 
-    const onCategoryChange = (e: RadioButtonChangeEvent) => {
-        let _product = { ...product };
-        _product['category'] = e.value;
-        setProduct(_product);
+    const handleRadioChange = (e) => {
+        const { value } = e.target;
+        setRadioValue(value === 'true');
     };
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
@@ -197,7 +275,7 @@ const Crud = () => {
         return (
             <React.Fragment>
                 <div className="my-2">
-                    <Button label="New" icon="pi pi-plus" severity="success" className=" mr-2" onClick={openNew} />
+                    {/* <Button label="New" icon="pi pi-plus" severity="success" className=" mr-2" onClick={openNew} /> */}
                     <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedProducts || !(selectedProducts as any).length} />
                 </div>
             </React.Fragment>
@@ -207,36 +285,54 @@ const Crud = () => {
     const rightToolbarTemplate = () => {
         return (
             <React.Fragment>
-                <FileUpload mode="basic" accept="image/*" maxFileSize={1000000} chooseLabel="Import" className="mr-2 inline-block" />
-                <Button label="Export" icon="pi pi-upload" severity="help" onClick={exportCSV} />
+                {/* <FileUpload mode="basic" accept="image/*" maxFileSize={1000000} chooseLabel="Import" className="mr-2 inline-block" /> */}
+                {/* <Button label="Export" icon="pi pi-upload" severity="help" onClick={exportCSV} /> */}
             </React.Fragment>
         );
     };
 
-    const codeBodyTemplate = (rowData: Demo.Product) => {
+    const codeBodyTemplate = (rowData: any) => {
         return (
             <>
                 <span className="p-column-title">Code</span>
-                {rowData.code}
+                {rowData.uid}
             </>
         );
     };
 
     const nameBodyTemplate = (rowData: any) => {
         const nameStyle = {
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          maxWidth: '150px' // Sesuaikan dengan lebar maksimum yang diinginkan
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '150px' // Sesuaikan dengan lebar maksimum yang diinginkan
         };
-      
+
         return (
-          <>
-            <span className="p-column-title">Name</span>
-            <div style={nameStyle}>{rowData.title}</div>
-          </>
+            <>
+                <span className="p-column-title">Name</span>
+                <div style={nameStyle}>{rowData.username}</div>
+            </>
         );
-      };
+    };
+
+    const emailBodyTemplate = (rowData: any) => {
+        return (
+            <>
+                <span className="p-column-title">Name</span>
+                <div>{rowData.email}</div>
+            </>
+        );
+    };
+
+    const roleBodyTemplate = (rowData: any) => {
+        return (
+            <>
+                <span className="p-column-title">Name</span>
+                <div>{rowData.isAdmin === false ? 'User' : 'Admin'}</div>
+            </>
+        );
+    };
 
     const imageBodyTemplate = (rowData: Demo.Product) => {
         return (
@@ -292,12 +388,51 @@ const Crud = () => {
         );
     };
 
+    const handleSearch = (event: any) => {
+        const searchInput = event.target.value;
+        setSearchInput(searchInput);
+
+        if (searchInput == '' || searchInput == null || searchInput == undefined || searchInput == ' ') {
+            // Jika input pencarian kosong, perbarui products dengan data asli
+            setProducts([...originalProducts]);
+        } else {
+            // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
+            fetch(`http://localhost:3001/users`)
+                .then((response) => response.json())
+                .then((data) => {
+                    if (Array.isArray(data.data)) {
+                        const transformedData = data.data
+                            .filter((item: any) => {
+                                const username = item.username.toLowerCase();
+                                return username.includes(searchInput.toLowerCase());
+                            })
+                            .map((item: any) => ({
+                                uid: item.uid,
+                                username: item.username,
+                                email: item.email,
+                                role: item.role
+                                // Tambahkan properti lain yang Anda perlukan
+                                // misalnya: ingredients, steps, dll.
+                            }));
+
+                        setProducts(transformedData);
+                        console.log(transformedData);
+                    } else {
+                        console.error('Invalid data format');
+                    }
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
+    };
+
     const header = (
         <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-            <h5 className="m-0">Manage Products</h5>
+            <h5 className="m-0">Manage Users</h5>
             <span className="block mt-2 md:mt-0 p-input-icon-left">
                 <i className="pi pi-search" />
-                <InputText type="search" onInput={(e) => setGlobalFilter(e.currentTarget.value)} placeholder="Search..." />
+                <InputText type="search" onInput={handleSearch} placeholder="Search..." />
             </span>
         </div>
     );
@@ -333,7 +468,7 @@ const Crud = () => {
                         value={products}
                         selection={selectedProducts}
                         onSelectionChange={(e) => setSelectedProducts(e.value as any)}
-                        dataKey="id"
+                        dataKey="uid"
                         paginator
                         rows={10}
                         rowsPerPageOptions={[5, 10, 25]}
@@ -346,60 +481,62 @@ const Crud = () => {
                         responsiveLayout="scroll"
                     >
                         <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
-                        <Column field="id" header="ID" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
-                        <Column field="name" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
+                        {/* <Column field="uid" header="UID" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column> */}
+                        <Column field="name" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
+                        <Column field="email" header="Email" sortable body={emailBodyTemplate} headerStyle={{ minWidth: '20rem' }}></Column>
                         {/* <Column header="Image" body={imageBodyTemplate}></Column>
                         <Column field="price" header="Price" body={priceBodyTemplate} sortable></Column>
                         <Column field="category" header="Category" sortable body={categoryBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
                         <Column field="rating" header="Reviews" body={ratingBodyTemplate} sortable></Column> */}
-                        <Column field="inventoryStatus" header="Role" body={statusBodyTemplate} sortable headerStyle={{ minWidth: '10rem' }}></Column>
+                        <Column field="isAdmin" header="Role" body={roleBodyTemplate} sortable headerStyle={{ minWidth: '10rem' }}></Column>
                         <Column body={actionBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
                     </DataTable>
 
-                    <Dialog visible={productDialog} style={{ width: '450px' }} header="Recipe Details" modal className="p-fluid" footer={productDialogFooter} onHide={hideDialog}>
+                    <Dialog visible={productDialog} style={{ width: '450px' }} header="User Details" modal className="p-fluid" footer={productDialogFooter} onHide={hideDialog}>
                         {product.image && <img src={`/demo/images/product/${product.image}`} alt={product.image} width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}
                         <div className="field">
-                            <label htmlFor="name">Name</label>
+                            <label htmlFor="name">Username</label>
                             <InputText
+                                readOnly
                                 id="name"
-                                value={product.name}
+                                value={product.username?.toString()}
                                 onChange={(e) => onInputChange(e, 'name')}
                                 required
                                 autoFocus
                                 className={classNames({
-                                    'p-invalid': submitted && !product.name
+                                    'p-invalid': submitted && !product.username
                                 })}
                             />
-                            {submitted && !product.name && <small className="p-invalid">Name is required.</small>}
-                        </div>
-                        <div className="field">
-                            <label htmlFor="description">Description</label>
-                            <InputTextarea id="description" value={product.description} onChange={(e) => onInputChange(e, 'description')} required rows={3} cols={20} />
                         </div>
 
                         <div className="field">
-                            <label className="mb-3">Category</label>
+                            <label htmlFor="email">Email</label>
+                            <InputText
+                                readOnly
+                                id="email"
+                                value={product.email?.toString()}
+                                onChange={(e) => onInputChange(e, 'name')}
+                                required
+                                autoFocus
+                                className={classNames({
+                                    'p-invalid': submitted && !product.email
+                                })}
+                            />
+                        </div>
+
+                        <div className="field">
+                            <label className="mb-3">Role</label>
                             <div className="formgrid grid">
                                 <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category1" name="category" value="Accessories" onChange={onCategoryChange} checked={product.category === 'Accessories'} />
-                                    <label htmlFor="category1">Accessories</label>
+                                    <RadioButton inputId="option1" name="option" value={true} checked={radioValue === true} onChange={(e) => setRadioValue(e.value)} />
+                                    <label htmlFor="option1">Admin</label>
                                 </div>
                                 <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category2" name="category" value="Clothing" onChange={onCategoryChange} checked={product.category === 'Clothing'} />
-                                    <label htmlFor="category2">Clothing</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category3" name="category" value="Electronics" onChange={onCategoryChange} checked={product.category === 'Electronics'} />
-                                    <label htmlFor="category3">Electronics</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category4" name="category" value="Fitness" onChange={onCategoryChange} checked={product.category === 'Fitness'} />
-                                    <label htmlFor="category4">Fitness</label>
+                                    <RadioButton inputId="option2" name="option" value={false} checked={radioValue === false} onChange={(e) => setRadioValue(e.value)} />
+                                    <label htmlFor="option2">User</label>
                                 </div>
                             </div>
                         </div>
-
-                    
                     </Dialog>
 
                     <Dialog visible={deleteProductDialog} style={{ width: '450px' }} header="Confirm" modal footer={deleteProductDialogFooter} onHide={hideDeleteProductDialog}>
@@ -407,7 +544,7 @@ const Crud = () => {
                             <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete <b>{product.name}</b>?
+                                    Are you sure you want to delete <b>{product.username}</b>?
                                 </span>
                             )}
                         </div>

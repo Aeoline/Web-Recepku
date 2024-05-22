@@ -40,6 +40,9 @@ const Dashboard = () => {
     const menu2 = useRef<Menu>(null);
     const [lineOptions, setLineOptions] = useState<ChartOptions>({});
     const { layoutConfig } = useContext(LayoutContext);
+    const [totalRecipes, setTotalRecipes] = useState(0);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
 
     const applyLightTheme = () => {
         const lineOptions: ChartOptions = {
@@ -117,6 +120,27 @@ const Dashboard = () => {
         }
     }, [layoutConfig.colorScheme]);
 
+    useEffect(() => {
+        async function fetchTotalRecipes() {
+            try {
+                setIsLoading(true);
+                const response = await fetch('/main/getTotalRecipe');
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                setTotalRecipes(data.data.totalRecipes);
+                setTotalUsers(data.data.totalUsers);
+            } catch (error) {
+                console.error('Error fetching total recipes:', error);
+                // Tambahkan penanganan kesalahan lainnya, seperti menampilkan pesan error
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchTotalRecipes();
+    }, []);
+
     const formatCurrency = (value: number) => {
         return value?.toLocaleString('en-US', {
             style: 'currency',
@@ -126,12 +150,20 @@ const Dashboard = () => {
 
     return (
         <div className="grid">
-            <div className="col-12 lg:col-6 xl:col-3">
+            <div className="col-12 xl:col-6">
                 <div className="card mb-0">
                     <div className="flex justify-content-between mb-3">
                         <div>
-                            <span className="block text-500 font-medium mb-3">Orders</span>
-                            <div className="text-900 font-medium text-xl">152</div>
+                            <span className="block text-500 font-medium mb-3">Recipes</span>
+                            <div className="text-900 font-medium text-xl">{isLoading ? 'Loading...' : totalRecipes}</div>
+                </div>
+            </div>xx
+            <div className="col-12 xl:col-6">
+                <div className="card mb-0">
+                    <div className="flex justify-content-between mb-3">
+                        <div>
+                            <span className="block text-500 font-medium mb-3">Recipes</span>
+                            <div className="text-900 font-medium text-xl">{totalUsers}</div>
                         </div>
                         <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                             <i className="pi pi-shopping-cart text-blue-500 text-xl" />
@@ -139,51 +171,6 @@ const Dashboard = () => {
                     </div>
                     <span className="text-green-500 font-medium">24 new </span>
                     <span className="text-500">since last visit</span>
-                </div>
-            </div>
-            <div className="col-12 lg:col-6 xl:col-3">
-                <div className="card mb-0">
-                    <div className="flex justify-content-between mb-3">
-                        <div>
-                            <span className="block text-500 font-medium mb-3">Revenue</span>
-                            <div className="text-900 font-medium text-xl">$2.100</div>
-                        </div>
-                        <div className="flex align-items-center justify-content-center bg-orange-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
-                            <i className="pi pi-map-marker text-orange-500 text-xl" />
-                        </div>
-                    </div>
-                    <span className="text-green-500 font-medium">%52+ </span>
-                    <span className="text-500">since last week</span>
-                </div>
-            </div>
-            <div className="col-12 lg:col-6 xl:col-3">
-                <div className="card mb-0">
-                    <div className="flex justify-content-between mb-3">
-                        <div>
-                            <span className="block text-500 font-medium mb-3">Customers</span>
-                            <div className="text-900 font-medium text-xl">28441</div>
-                        </div>
-                        <div className="flex align-items-center justify-content-center bg-cyan-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
-                            <i className="pi pi-inbox text-cyan-500 text-xl" />
-                        </div>
-                    </div>
-                    <span className="text-green-500 font-medium">520 </span>
-                    <span className="text-500">newly registered</span>
-                </div>
-            </div>
-            <div className="col-12 lg:col-6 xl:col-3">
-                <div className="card mb-0">
-                    <div className="flex justify-content-between mb-3">
-                        <div>
-                            <span className="block text-500 font-medium mb-3">Comments</span>
-                            <div className="text-900 font-medium text-xl">152 Unread</div>
-                        </div>
-                        <div className="flex align-items-center justify-content-center bg-purple-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
-                            <i className="pi pi-comment text-purple-500 text-xl" />
-                        </div>
-                    </div>
-                    <span className="text-green-500 font-medium">85 </span>
-                    <span className="text-500">responded</span>
                 </div>
             </div>
 

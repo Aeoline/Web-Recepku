@@ -119,7 +119,7 @@ declare namespace Demo {
 
     //ProductService
     type Product = {
-        id?: string;
+        uid?: string;
         code?: string;
         name: string;
         description: string;
@@ -130,13 +130,20 @@ declare namespace Demo {
         calories?: number;
         healthyCalories?: number;
         image?: string;
-        category?: string;
         quantity?: number;
         inventoryStatus?: InventoryStatus;
         rating?: number;
         orders?: ProductOrder[];
+        slug?: string;
+        username?: string;
+        title?: string;
+        isAdmin: boolean;
+        isFavorite:  [name: string, code: string] ;
         [key: string]: string | string[] | number | boolean | undefined | ProductOrder[] | InventoryStatus;
     };
+
+
+    
 
     type ProductOrder = {
         id?: string;
