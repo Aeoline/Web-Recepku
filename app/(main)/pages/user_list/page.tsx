@@ -40,7 +40,7 @@ const Crud = () => {
 
     useEffect(() => {
         axios
-            .get('http://localhost:3001/users')
+            .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users')
             .then((res: any) => {
                 const data = res.data.data;
                 setOriginalProducts(data);
@@ -87,7 +87,7 @@ const Crud = () => {
         if (product.username && product.username.trim()) {
             let _products = [...(products as any)];
             let _product = { ...product };
-            fetch(`http://localhost:3001/users/${product.uid}`, {
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${product.uid}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -149,7 +149,7 @@ const Crud = () => {
         const productId = product.uid;
 
         // Mengirim permintaan DELETE ke server
-        fetch(`http://localhost:3001/users/${productId}`, {
+        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${productId}`, {
             method: 'DELETE'
         })
             .then((response) => {
@@ -213,7 +213,7 @@ const Crud = () => {
         try {
             const selectedUserIds = selectedProducts.map((product) => product.uid);
             // Mengirim permintaan DELETE ke server
-            const response = await fetch(`http://localhost:3001/users/${selectedUserIds.join(',')}`, {
+            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${selectedUserIds.join(',')}`, {
                 method: 'DELETE'
             });
 
@@ -397,7 +397,7 @@ const Crud = () => {
             setProducts([...originalProducts]);
         } else {
             // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
-            fetch(`http://localhost:3001/users`)
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users`)
                 .then((response) => response.json())
                 .then((data) => {
                     if (Array.isArray(data.data)) {

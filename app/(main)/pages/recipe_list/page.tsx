@@ -22,29 +22,12 @@ import axios from 'axios';
 import { Dropdown } from 'primereact/dropdown';
 import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { Divider } from 'primereact/divider';
+import { Chips } from 'primereact/chips';
 
-interface InputValue {
-    name: string;
-    code: boolean;
-}
+type InputValue = { value: boolean; label: string };
+
 const Crud = () => {
-    let emptyProduct: Demo.Product = {
-        id: '',
-        name: '',
-        image: '', // 'hapus' nanti,
-        photoUrl: '',
-        description: '',
-        ingredients: '', // Ubah menjadi array kosong
-        steps: '', // Ubah menjadi array kosong
-        healthyCalories: 0,
-        calories: 0,
-        healthysteps: '',
-        healthyIngredients: '', // Ubah menjadi array kosong
-        category: '', // 'hapus' nanti,
-        quantity: 0, // 'hapus' nanti,
-        rating: 0, // 'hapus' nanti,
-        inventoryStatus: 'USER' // 'hapus' nanti,
-    };
+    let emptyProduct: Demo.Product = {};
 
     const [products, setProducts] = useState([]);
     const [recipeDialog, setRecipeDialog] = useState(false);
@@ -59,23 +42,28 @@ const Crud = () => {
     const dt = useRef<DataTable<any>>(null);
     const [originalProducts, setOriginalProducts] = useState([]);
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
-    const [dropdownValue, setDropdownValue] = useState(product.isFavorite ? 'true' : 'false');
+    const [dropdownValue, setDropdownValue] = useState<InputValue | null>(null);
 
     useEffect(() => {
         axios
-            .get('http://localhost:3001/recipes')
+            .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes')
             .then((res: any) => {
-                // Ambil nilai isFavorite dari setiap objek makanan
                 const data = res.data.data;
 
-                setOriginalProducts(data); // Simpan data asli ke state originalProducts
-                setProducts(data); // Simpan data ke state products
+                setOriginalProducts(data); // Save original data to state
+                setProducts(data); // Save data to state
                 console.log(data);
                 const firstFood = data[0];
                 console.log(firstFood.title);
                 console.log(firstFood.description);
                 console.log(firstFood.ingredients);
                 console.log(firstFood.steps);
+
+                // Set initial dropdown value based on the first product's isFavorite field
+                if (firstFood) {
+                    const initialOption = dropdownValues.find((option) => option.value === firstFood.isFavorite) || null;
+                    setDropdownValue(initialOption);
+                }
             })
             .catch((error: any) => {
                 console.error(error);
@@ -110,7 +98,7 @@ const Crud = () => {
             setProducts([...originalProducts]);
         } else {
             // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
-            fetch(`http://localhost:3001/recipes`)
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes`)
                 .then((response) => response.json())
                 .then((data) => {
                     if (Array.isArray(data.data)) {
@@ -130,7 +118,7 @@ const Crud = () => {
                                 steps: item.steps,
                                 healthyIngredients: item.healthyIngredients,
                                 healthySteps: item.healthySteps,
-                                isFavorite: item.isFavorite.name,
+                                isFavorite: item.isFavorite.name
                                 // Tambahkan properti lain yang Anda perlukan
                                 // misalnya: ingredients, steps, dll.
                             }));
@@ -156,7 +144,7 @@ const Crud = () => {
 
             if (product.id) {
                 // Mengirim permintaan PUT ke server untuk memperbarui produk
-                fetch(`http://localhost:3001/recipes/${product.id}`, {
+                fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${product.id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -203,7 +191,7 @@ const Crud = () => {
                     });
             } else {
                 // Mengirim permintaan POST ke server untuk membuat produk baru
-                fetch('http://localhost:3001/recipes', {
+                fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -211,44 +199,44 @@ const Crud = () => {
                     body: JSON.stringify({
                         _product
                     })
-                })
-                fetch('http://localhost:3001/recipes', {
+                });
+                fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(product),
-                  })
+                    body: JSON.stringify(product)
+                })
                     .then((response) => {
-                      if (response.ok) {
-                        // Memperbarui data produk setelah berhasil dibuat
-                        fetch('http://localhost:3001/recipes') // Mengambil semua produk dari server
-                          .then((response) => response.json())
-                          .then((item) => {
-                            // Redirect ke halaman utama
-                            window.location.href = 'http://localhost:3000/pages/recipe_list';
-                          })
-                          .catch((error) => {
-                            console.log(error);
-                            toast.current?.show({
-                              severity: 'error',
-                              summary: 'Error',
-                              detail: 'Failed to create product',
-                              life: 3000,
-                            });
-                          });
-                      } else {
-                        throw new Error('Failed to create product');
-                      }
+                        if (response.ok) {
+                            // Memperbarui data produk setelah berhasil dibuat
+                            fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes') // Mengambil semua produk dari server
+                                .then((response) => response.json())
+                                .then((item) => {
+                                    // Redirect ke halaman utama
+                                    window.location.href = 'http://localhost:3000/pages/recipe_list';
+                                })
+                                .catch((error) => {
+                                    console.log(error);
+                                    toast.current?.show({
+                                        severity: 'error',
+                                        summary: 'Error',
+                                        detail: 'Failed to create product',
+                                        life: 3000
+                                    });
+                                });
+                        } else {
+                            throw new Error('Failed to create product');
+                        }
                     })
                     .catch((error) => {
-                      console.log(error);
-                      toast.current?.show({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Failed to create product',
-                        life: 3000,
-                      });
+                        console.log(error);
+                        toast.current?.show({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to create product',
+                            life: 3000
+                        });
                     });
             }
         }
@@ -269,7 +257,7 @@ const Crud = () => {
         const productId = product.id;
 
         // Mengirim permintaan DELETE ke server
-        fetch(`http://localhost:3001/recipes/${productId}`, {
+        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${productId}`, {
             method: 'DELETE'
         })
             .then((response) => {
@@ -333,7 +321,7 @@ const Crud = () => {
         const selectedProductIds = selectedProducts.map((product) => product.id);
 
         // Mengirim permintaan DELETE ke server untuk menghapus produk yang dipilih
-        fetch(`http://localhost:3001/recipes/${selectedProductIds.join(',')}`, {
+        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedProductIds.join(',')}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -418,7 +406,7 @@ const Crud = () => {
         return (
             <>
                 <span className="p-column-title">Code</span>
-                {rowData.isFavorite?.code ? "Yes" : "No"}
+                {rowData.isFavorite ? 'Yes' : 'No'}
             </>
         );
     };
@@ -527,23 +515,43 @@ const Crud = () => {
     );
 
     const dropdownValues: InputValue[] = [
-        { name: 'Yes', code: true },
-        { name: 'No', code: false }
+        { value: true, label: 'Yes' },
+        { value: false, label: 'No' }
     ];
+
+    const handleChange = (option: InputValue | null) => {
+        setDropdownValue(option);
+        // Update the database with the new value
+        if (option) {
+            updateDatabase(option.value); // Implement this function to update your database
+        }
+    };
+
+    // Mock function to demonstrate updating the database
+    const updateDatabase = (value: boolean) => {
+        console.log('Updating database with value:', value);
+        // Implement your actual database update logic here
+    };
 
     const onUploadPhoto = (event) => {
         const file = event.files[0];
-    
+
         // Lakukan pengolahan atau unggah file ke server di sini
         // Setelah selesai, dapatkan URL foto yang diunggah dan simpan di state produk
         const reader = new FileReader();
         reader.onload = (e) => {
-          const uploadedPhotoUrl = e.target.result;
-          console.log(uploadedPhotoUrl); // Periksa URL foto yang diunggah di konsol
-          setProduct({ ...product, photoUrl: uploadedPhotoUrl });
+            const uploadedPhotoUrl = e.target.result;
+            console.log(uploadedPhotoUrl); // Periksa URL foto yang diunggah di konsol
+            setProduct({ ...product, photoUrl: uploadedPhotoUrl });
         };
         reader.readAsDataURL(file);
-      };
+    };
+
+    const onChipsChange = (value: string[], name: string) => {
+        let _product = { ...product };
+        _product[name] = value;
+        setProduct(_product);
+    };
 
     return (
         <div className="grid crud-demo">
@@ -677,16 +685,16 @@ const Crud = () => {
                             <label htmlFor="isFavorite">Is Recommended</label>
                             <Dropdown
                                 id="isFavorite"
-                                value={product.isFavorite}
-                                onChange={(e) => setDropdownValue(e.value)}
+                                value={dropdownValue}
+                                onChange={(e) => handleChange(e.value)}
                                 options={dropdownValues}
-                                optionLabel="name"
+                                optionLabel="label"
                                 placeholder="Select"
                                 className={classNames({
                                     'p-invalid': submitted && dropdownValue === null
                                 })}
                             />
-                            {submitted && dropdownValue === null && !product.isFavorite && <small className="p-invalid">This Field is required.</small>}
+                            {/* {submitted && dropdownValue === null && !product.isFavorite && <small className="p-invalid">This Field is required.</small>} */}
                         </div>
 
                         <h5>Normal Recipe</h5>
@@ -705,34 +713,30 @@ const Crud = () => {
 
                         <div className="field">
                             <label htmlFor="ingredients">Ingredients</label>
-                            <InputTextarea
+                            <Chips
                                 id="ingredients"
                                 value={product.ingredients}
-                                onChange={(e) => onInputChange(e, 'ingredients')}
+                                onChange={(e) => onChipsChange(e.value, 'ingredients')}
                                 required
-                                rows={3}
-                                cols={20}
                                 className={classNames({
-                                    'p-invalid': submitted && !product.ingredients
+                                    'p-invalid': submitted && (!product.ingredients || product.ingredients.length === 0)
                                 })}
                             />
-                            {submitted && !product.ingredients && <small className="p-invalid">Ingredients is required.</small>}
+                            {submitted && (!product.ingredients || product.ingredients.length === 0) && <small className="p-invalid">Ingredients is required.</small>}
                         </div>
 
                         <div className="field">
                             <label htmlFor="steps">Steps</label>
-                            <InputTextarea
+                            <Chips
                                 id="steps"
                                 value={product.steps}
-                                onChange={(e) => onInputChange(e, 'steps')}
+                                onChange={(e) => onChipsChange(e.value, 'steps')}
                                 required
-                                rows={3}
-                                cols={20}
                                 className={classNames({
-                                    'p-invalid': submitted && !product.steps
+                                    'p-invalid': submitted && (!product.steps || product.steps.length === 0)
                                 })}
                             />
-                            {submitted && !product.steps && <small className="p-invalid">Steps is required.</small>}
+                            {submitted && !product.steps && product.steps?.length === 0 && <small className="p-invalid">Steps is required.</small>}
                         </div>
 
                         <h5>Healthy Recipe</h5>
@@ -751,34 +755,30 @@ const Crud = () => {
 
                         <div className="field">
                             <label htmlFor="healthyIngredients">Ingredients</label>
-                            <InputTextarea
+                            <Chips
                                 id="healthyIngredients"
                                 value={product.healthyIngredients}
-                                onChange={(e) => onInputChange(e, 'healthyIngredients')}
+                                onChange={(e) => onChipsChange(e.value, 'healthyIngredients')}
                                 required
-                                rows={3}
-                                cols={20}
                                 className={classNames({
-                                    'p-invalid': submitted && !product.healthyIngredients
+                                    'p-invalid': submitted && (!product.healthyIngredients || product.healthyIngredients.length === 0)
                                 })}
                             />
-                            {submitted && !product.healthyIngredients && <small className="p-invalid">Ingredients is required.</small>}
+                            {submitted && !product.healthyIngredients && product.healthyIngredients?.length === 0 && <small className="p-invalid">Ingredients is required.</small>}
                         </div>
 
                         <div className="field">
                             <label htmlFor="healthySteps">Steps</label>
-                            <InputTextarea
+                            <Chips
                                 id="healthySteps"
                                 value={product.healthySteps}
-                                onChange={(e) => onInputChange(e, 'healthySteps')}
+                                onChange={(e) => onChipsChange(e.value, 'healthySteps')}
                                 required
-                                rows={3}
-                                cols={20}
                                 className={classNames({
-                                    'p-invalid': submitted && !product.healthySteps
+                                    'p-invalid': submitted && (!product.healthySteps || product.healthySteps.length === 0)
                                 })}
                             />
-                            {submitted && !product.healthySteps && <small className="p-invalid">Steps is required.</small>}
+                            {submitted && !product.healthySteps && product.healthySteps?.length === 0 && <small className="p-invalid">Steps is required.</small>}
                         </div>
                     </Dialog>
 

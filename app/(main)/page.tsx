@@ -44,6 +44,7 @@ const Dashboard = () => {
     const [recipeSize, setRecipeSize] = useState(0);
     const [userSize, setUserSize] = useState(0);
     const [latestRecipes, setLatestRecipes] = useState([]);
+    const [latestUsers, setLatestUsers] = useState([]);
 
     useEffect(() => {
         ProductService.getProductsSmall().then((data) => setProducts(data));
@@ -52,7 +53,7 @@ const Dashboard = () => {
     useEffect(() => {
         async function fetchTotalRecipes() {
             try {
-                const response = await fetch('http://localhost:3001/getTotalRecipes');
+                const response = await fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getTotalRecipes');
                 if (!response.ok) {
                     throw new Error(`HTTP error ${response.status}`);
                 }
@@ -69,7 +70,7 @@ const Dashboard = () => {
     useEffect(() => {
         async function fetchTotalUsers() {
             try {
-                const response = await fetch('http://localhost:3001/getTotalUsers');
+                const response = await fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getTotalUsers');
                 if (!response.ok) {
                     throw new Error(`HTTP error ${response.status}`);
                 }
@@ -86,7 +87,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchLatestRecipes = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/getLatestRecipes');
+                const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestRecipes');
                 setLatestRecipes(response.data.data.recipe.data);
             } catch (error) {
                 console.error('Error fetching latest recipes:', error);
@@ -94,6 +95,19 @@ const Dashboard = () => {
         };
 
         fetchLatestRecipes();
+    }, []);
+
+    useEffect(() => {
+        const fetchLatestUsers = async () => {
+            try {
+                const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestUsers');
+                setLatestUsers(response.data.data.user.data);
+            } catch (error) {
+                console.error('Error fetching latest users:', error);
+            }
+        };
+
+        fetchLatestUsers();
     }, []);
 
     const formatCurrency = (value: number) => {
@@ -140,11 +154,11 @@ const Dashboard = () => {
 
             <div className="col-12 xl:col-6">
                 <div className="card">
-                    <h5>User Recipes</h5>
-                    <DataTable value={products} rows={5} paginator responsiveLayout="scroll">
-                        <Column header="Image" body={(data) => <img className="shadow-2" src={`${data.image}`} alt={data.image} width="50" />} />
-                        <Column field="name" header="Name" sortable style={{ width: '35%' }} />
-                        <Column field="price" header="Price" sortable style={{ width: '30%' }} body={(data) => formatCurrency(data.price)} />
+                    <h5>Recent Users</h5>
+                    <DataTable value={latestUsers} rows={5} paginator responsiveLayout="scroll">
+                        <Column field="username" header="Username" sortable style={{ width: '40%' }} />
+                        <Column field="email" header="Email" sortable style={{ width: '40%' }}/>
+                        <Column field="role" header="Role" sortable style={{ width: '35%' }} />
                     </DataTable>
                 </div>
             </div>

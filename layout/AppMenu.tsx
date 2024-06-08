@@ -19,8 +19,8 @@ const AppMenu = () => {
             label: 'Recipe',
             items: [
                 { label: 'Recipe List', icon: 'pi pi-fw pi-list', to: '/pages/recipe_list' },
-                { label: 'Input', icon: 'pi pi-fw pi-check-square', to: '/uikit/input' },
-                { label: 'Panel', icon: 'pi pi-fw pi-check-square', to: '/uikit/panel' },
+                // { label: 'Input', icon: 'pi pi-fw pi-check-square', to: '/uikit/input' },
+                // { label: 'Panel', icon: 'pi pi-fw pi-check-square', to: '/uikit/panel' },
             ]
         },
         {
