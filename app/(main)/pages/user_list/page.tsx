@@ -20,6 +20,7 @@ import { firestore } from '@/utils/firebase';
 import { collection, getDocs } from 'firebase/firestore/lite';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
 
 const getAuthConfig = () => {
     const token = Cookies.get('access_token');
@@ -36,6 +37,7 @@ const getAuthConfig = () => {
 
 /* @todo Used 'as any' for types here. Will fix in next version due to onSelectionChange event type issue. */
 const Crud = () => {
+    const router = useRouter();
     const [products, setProducts] = useState([]);
     const [productDialog, setProductDialog] = useState(false);
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
@@ -50,6 +52,14 @@ const Crud = () => {
     const [originalProducts, setOriginalProducts] = useState([]);
     const [radioValue, setRadioValue] = useState(product.isAdmin ? true : false);
 
+    useEffect(() => {
+        // Pengecekan token dan redirect jika tidak ada token
+        const token = Cookies.get('access_token');
+        if (!token) {
+          router.push('/auth/login');
+        }
+      }, [router]);
+      
     useEffect(() => {
         const config = getAuthConfig();
         if (!config) {

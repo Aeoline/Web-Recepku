@@ -24,8 +24,10 @@ import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { Divider } from 'primereact/divider';
 import { Chips } from 'primereact/chips';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
 
 type InputValue = { value: boolean; label: string };
+
 
 const getAuthConfig = () => {
     const token = Cookies.get('access_token');
@@ -42,7 +44,7 @@ const getAuthConfig = () => {
 
 const Crud = () => {
     let emptyProduct: Demo.Product = {};
-
+    const router = useRouter();
     const [products, setProducts] = useState([]);
     const [recipeDialog, setRecipeDialog] = useState(false);
     const [deleterecipeDialog, setDeleterecipeDialog] = useState(false);
@@ -57,6 +59,14 @@ const Crud = () => {
     const [originalProducts, setOriginalProducts] = useState([]);
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
     const [dropdownValue, setDropdownValue] = useState<InputValue | null>(null);
+
+    useEffect(() => {
+        // Pengecekan token dan redirect jika tidak ada token
+        const token = Cookies.get('access_token');
+        if (!token) {
+          router.push('/auth/login');
+        }
+      }, [router]);
 
     useEffect(() => {
         const config = getAuthConfig();

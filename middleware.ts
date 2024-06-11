@@ -5,10 +5,6 @@ import { parseCookies, destroyCookie } from "nookies";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Bypass middleware untuk route logout
-  if (pathname === '/api/logout') {
-    return NextResponse.next();
-  }
 
   const accessToken = request.cookies.get('access_token')?.value;
   console.log(`Access token: ${accessToken}`); // Logging token
@@ -34,7 +30,7 @@ export async function middleware(request: NextRequest) {
         const isAdmin = resData.data.isAdmin;
         console.log(`User isAdmin: ${isAdmin}`); // Logging isAdmin
 
-        if (pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/') {
+        if (pathname === '/auth/login' || pathname === '/') {
           if (isAdmin) {
             console.log('Redirecting to /pages/dashboard'); // Logging redirection
             return NextResponse.redirect(new URL('/pages/dashboard', request.url));
@@ -43,7 +39,7 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL('/auth/access', request.url));
           }
         }
-        // Untuk rute lain selain login, register, atau root
+        // Untuk rute lain selain login,atau root
         return NextResponse.next();
       }
 

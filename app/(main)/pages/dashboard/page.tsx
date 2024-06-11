@@ -13,10 +13,11 @@ import { Demo } from '@/types';
 import { ChartData, ChartOptions } from 'chart.js';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
+
 
 const getAuthConfig = () => {
     const token = Cookies.get('access_token');
-
     if (!token) {
         console.error('No token found');
         return null;
@@ -28,6 +29,7 @@ const getAuthConfig = () => {
 };
 
 const Dashboard = () => {
+    const router = useRouter();
     const [products, setProducts] = useState<Demo.Product[]>([]);
     const menu1 = useRef<Menu>(null);
     const menu2 = useRef<Menu>(null);
@@ -39,10 +41,14 @@ const Dashboard = () => {
     const [latestUsers, setLatestUsers] = useState([]);
 
     useEffect(() => {
-        ProductService.getProductsSmall().then((data) => setProducts(data));
-    }, []);
-
+        // Pengecekan token dan redirect jika tidak ada token
+        const token = Cookies.get('access_token');
+        if (!token) {
+          router.push('/auth/login');
+        }
+      }, [router]);
     useEffect(() => {
+        
         async function fetchTotalRecipes() {
             const config = getAuthConfig();
             if (!config) {

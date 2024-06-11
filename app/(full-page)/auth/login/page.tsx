@@ -1,12 +1,13 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Checkbox } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
 import { Password } from 'primereact/password';
 import { InputText } from 'primereact/inputtext';
 import { classNames } from 'primereact/utils';
 import axios from 'axios';
+import { Toast } from 'primereact/toast';
 
 interface LoginData {
     username: string;
@@ -21,11 +22,11 @@ const LoginPage = () => {
 
     const [checked, setChecked] = useState(false);
     const router = useRouter();
+    const toast = useRef<Toast>(null);
 
     const containerClassName = classNames('surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden', { 'p-input-filled': true });
 
     const handleLogin = async () => {
-
         try {
             const response = await axios.post('http://localhost:3001/login', loginData);
 
@@ -46,17 +47,18 @@ const LoginPage = () => {
             } else {
                 console.error(`Login failed: ${response.data.message}`);
                 // Display an error message to the user
-                alert(`Login failed: ${response.data.message}`);
+                toast.current?.show({ severity: 'error', summary: 'Login Failed', detail: response.data.message, life: 3000 });
             }
         } catch (error) {
             console.error('Error during login:', error);
             // Display a generic error message to the user
-            alert('An error occurred during login. Please try again later.');
+            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Wrong Username/Password', life: 3000 });
         }
     };
 
     return (
         <div className={containerClassName}>
+            <Toast ref={toast} />
             <div className="flex flex-column align-items-center justify-content-center">
                 <div
                     style={{
@@ -98,13 +100,7 @@ const LoginPage = () => {
                                 inputClassName="w-full p-3 md:w-30rem"
                             />
                             <div className="flex align-items-center justify-content-between mb-5 gap-5">
-                                <div className="flex align-items-center">
-                                    <Checkbox inputId="rememberme1" checked={checked} onChange={(e) => setChecked(e.checked ?? false)} className="mr-2"></Checkbox>
-                                    <label htmlFor="rememberme1">Remember me</label>
-                                </div>
-                                <a className="font-medium no-underline ml-2 text-right cursor-pointer" style={{ color: 'var(--primary-color)' }}>
-                                    Forgot password?
-                                </a>
+                                
                             </div>
                             <Button label="Sign In" className="w-full p-3 text-xl" onClick={handleLogin}></Button>
                         </div>
