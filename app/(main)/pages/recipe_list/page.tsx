@@ -23,8 +23,22 @@ import { Dropdown } from 'primereact/dropdown';
 import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { Divider } from 'primereact/divider';
 import { Chips } from 'primereact/chips';
+import Cookies from 'js-cookie';
 
 type InputValue = { value: boolean; label: string };
+
+const getAuthConfig = () => {
+    const token = Cookies.get('access_token');
+
+    if (!token) {
+        console.error('No token found');
+        return null;
+    }
+
+    return {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    };
+};
 
 const Crud = () => {
     let emptyProduct: Demo.Product = {};
@@ -45,8 +59,12 @@ const Crud = () => {
     const [dropdownValue, setDropdownValue] = useState<InputValue | null>(null);
 
     useEffect(() => {
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi useEffect ini
+        }
         axios
-            .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes')
+            .get('http://localhost:3001/recipes', config)
             .then((res: any) => {
                 const data = res.data.data;
 
@@ -93,12 +111,17 @@ const Crud = () => {
         const searchInput = event.target.value;
         setSearchInput(searchInput);
 
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi useEffect ini
+        }
+
         if (searchInput == '' || searchInput == null || searchInput == undefined || searchInput == ' ') {
             // Jika input pencarian kosong, perbarui products dengan data asli
             setProducts([...originalProducts]);
         } else {
             // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
-            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes`)
+            fetch(`http://localhost:3001/recipes`, config)
                 .then((response) => response.json())
                 .then((data) => {
                     if (Array.isArray(data.data)) {
@@ -138,107 +161,108 @@ const Crud = () => {
     const saveProduct = () => {
         setSubmitted(true);
 
-        if (typeof product.title === 'string' && product.title.trim()) {
-            let _products = [...products];
-            let _product = { ...product, isFavorite: dropdownValue };
+        // Validasi bahwa semua properti tidak kosong
+        const requiredFields = ['title', 'slug', 'description', 'calories', 'healthyCalories', 'ingredients', 'healthyIngredients', 'steps', 'healthySteps', 'photoUrl'];
 
-            if (product.id) {
-                // Mengirim permintaan PUT ke server untuk memperbarui produk
-                fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${product.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        title: _product.title,
-                        slug: _product.slug,
-                        description: _product.description,
-                        calories: _product.calories,
-                        healthyCalories: _product.healthyCalories,
-                        ingredients: _product.ingredients,
-                        healthyIngredients: _product.healthyIngredients,
-                        steps: _product.steps,
-                        healthySteps: _product.healthySteps,
-                        isFavorite: _product.isFavorite,
-                        photoUrl: _product.photoUrl // Menggunakan uploadedPhotoUrl
-                    })
-                })
-                    .then((response) => {
-                        if (response.ok) {
-                            const index = findIndexById(product.id);
-                            _products[index] = _product;
-                            setProducts(_products);
-                            setRecipeDialog(false);
-                            setProduct(emptyProduct);
-                            toast.current?.show({
-                                severity: 'success',
-                                summary: 'Successful',
-                                detail: 'Product Updated',
-                                life: 3000
-                            });
-                        } else {
-                            throw new Error('Failed to update product');
-                        }
-                    })
-                    .catch((error) => {
-                        console.log(error);
+        // Memeriksa apakah ada field yang kosong
+        const isEmptyField = requiredFields.some((field) => !product[field] || product[field].toString().trim() === '');
+
+        if (isEmptyField) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'All fields are required',
+                life: 3000
+            });
+            return;
+        }
+
+        let _products = [...products];
+        let _product = { ...product, isFavorite: dropdownValue };
+
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi useEffect ini
+        }
+
+        if (product.id) {
+            // Mengirim permintaan PUT ke server untuk memperbarui produk
+            fetch(`http://localhost:3001/recipes/${product.id}`, {
+                method: 'PUT',
+                headers: config.headers,
+                body: JSON.stringify(_product)
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        const index = findIndexById(product.id);
+                        _products[index] = _product;
+                        setProducts(_products);
+                        setRecipeDialog(false);
+                        setProduct(emptyProduct);
                         toast.current?.show({
-                            severity: 'error',
-                            summary: 'Error',
-                            detail: 'Failed to update product',
+                            severity: 'success',
+                            summary: 'Successful',
+                            detail: 'Product Updated',
                             life: 3000
                         });
+                    } else {
+                        throw new Error('Failed to update product');
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to update product',
+                        life: 3000
                     });
-            } else {
-                // Mengirim permintaan POST ke server untuk membuat produk baru
-                fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        _product
-                    })
                 });
-                fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(product)
-                })
-                    .then((response) => {
-                        if (response.ok) {
-                            // Memperbarui data produk setelah berhasil dibuat
-                            fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes') // Mengambil semua produk dari server
-                                .then((response) => response.json())
-                                .then((item) => {
-                                    // Redirect ke halaman utama
-                                    window.location.href = 'http://localhost:3000/pages/recipe_list';
-                                })
-                                .catch((error) => {
-                                    console.log(error);
-                                    toast.current?.show({
-                                        severity: 'error',
-                                        summary: 'Error',
-                                        detail: 'Failed to create product',
-                                        life: 3000
-                                    });
+        } else {
+            // Mengirim permintaan POST ke server untuk membuat produk baru
+            fetch('http://localhost:3001/recipes', {
+                method: 'POST',
+                headers: config.headers,
+                body: JSON.stringify(_product)
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        // Memperbarui data produk setelah berhasil dibuat
+                        fetch('http://localhost:3001/recipes', config) // Mengambil semua produk dari server
+                            .then((response) => response.json())
+                            .then((items) => {
+                                setProducts(items);
+                                setRecipeDialog(false);
+                                setProduct(emptyProduct);
+                                toast.current?.show({
+                                    severity: 'success',
+                                    summary: 'Successful',
+                                    detail: 'Product Created',
+                                    life: 3000
                                 });
-                        } else {
-                            throw new Error('Failed to create product');
-                        }
-                    })
-                    .catch((error) => {
-                        console.log(error);
-                        toast.current?.show({
-                            severity: 'error',
-                            summary: 'Error',
-                            detail: 'Failed to create product',
-                            life: 3000
-                        });
+                            })
+                            .catch((error) => {
+                                console.log(error);
+                                toast.current?.show({
+                                    severity: 'error',
+                                    summary: 'Error',
+                                    detail: 'Failed to fetch products',
+                                    life: 3000
+                                });
+                            });
+                    } else {
+                        throw new Error('Failed to create product');
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                    toast.current?.show({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to create product',
+                        life: 3000
                     });
-            }
+                });
         }
     };
 
@@ -255,10 +279,15 @@ const Crud = () => {
     const deleteProduct = () => {
         // Mengambil ID produk yang akan dihapus
         const productId = product.id;
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi
+        }
 
         // Mengirim permintaan DELETE ke server
-        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${productId}`, {
-            method: 'DELETE'
+        fetch(`http://localhost:3001/recipes/${productId}`, {
+            method: 'DELETE',
+            headers: config.headers
         })
             .then((response) => {
                 if (response.ok) {
@@ -319,42 +348,45 @@ const Crud = () => {
 
     const deleteSelectedProducts = () => {
         const selectedProductIds = selectedProducts.map((product) => product.id);
-
+    
+        const config = getAuthConfig();
+        if (!config) {
+          return; // Jika tidak ada token, hentikan eksekusi
+        }
+    
         // Mengirim permintaan DELETE ke server untuk menghapus produk yang dipilih
-        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedProductIds.join(',')}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ ids: selectedProductIds })
+        fetch(`http://localhost:3001/recipes`, {
+          method: 'DELETE',
+          headers: config.headers,
+          body: JSON.stringify({ ids: selectedProductIds })
         })
-            .then((response) => {
-                if (response.ok) {
-                    // Menghapus produk dari state
-                    const updatedProducts = products.filter((product) => !selectedProductIds.includes(product.id));
-                    setProducts(updatedProducts);
-                    setDeleteRecipeDialog(false);
-                    setSelectedProducts([]);
-                    toast.current?.show({
-                        severity: 'success',
-                        summary: 'Successful',
-                        detail: 'Products Deleted',
-                        life: 3000
-                    });
-                } else {
-                    throw new Error('Failed to delete products');
-                }
-            })
-            .catch((error) => {
-                console.log(error);
-                toast.current?.show({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to delete products',
-                    life: 3000
-                });
+          .then((response) => {
+            if (response.ok) {
+              // Menghapus produk dari state
+              const updatedProducts = products.filter((product) => !selectedProductIds.includes(product.id));
+              setProducts(updatedProducts);
+              setDeleteRecipeDialog(false);
+              setSelectedProducts([]);
+              toast.current?.show({
+                severity: 'success',
+                summary: 'Successful',
+                detail: 'Products Deleted',
+                life: 3000
+              });
+            } else {
+              throw new Error('Failed to delete products');
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            toast.current?.show({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to delete products',
+              life: 3000
             });
-    };
+          });
+      };
 
     const onCategoryChange = (e: RadioButtonChangeEvent) => {
         let _product = { ...product };
@@ -488,7 +520,7 @@ const Crud = () => {
 
     const header = (
         <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-            <h5 className="m-0">Manage Products</h5>
+            <h5 className="m-0">Manage Recipes</h5>
             <span className="block mt-2 md:mt-0 p-input-icon-left">
                 <i className="pi pi-search" />
                 <InputText type="search" onInput={handleSearch} placeholder="Search..." />
@@ -578,7 +610,7 @@ const Crud = () => {
                         responsiveLayout="scroll"
                     >
                         <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
-                        <Column field="code" header="ID" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '5rem' }}></Column>
+                        {/* <Column field="code" header="ID" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '5rem' }}></Column> */}
                         <Column field="title" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
                         <Column header="Image" body={imageBodyTemplate}></Column>
                         <Column field="calories" header="Calories" sortable body={caloriesBodyTemplate} headerStyle={{ minWidth: '5rem' }}></Column>
@@ -599,23 +631,21 @@ const Crud = () => {
                                 <Divider layout="vertical"></Divider>
                             </div>
                             <div className="col-5 items-center justify-center">
-                                <Divider align="right">
-                                    <FileUpload
-                                        id="photo"
-                                        name="photo"
-                                        mode="basic"
-                                        accept="image/*"
-                                        chooseLabel="Upload"
-                                        uploadLabel="Submit"
-                                        cancelLabel="Cancel"
-                                        customUpload
-                                        uploadHandler={onUploadPhoto}
-                                        className={classNames({
-                                            'p-invalid': submitted && !product.photoUrl
-                                        })}
-                                    />
-                                    {submitted && !product.photoUrl && <small className="p-invalid">Photo is required.</small>}
-                                </Divider>
+                                <FileUpload
+                                    id="photo"
+                                    name="photo"
+                                    mode="basic"
+                                    accept="image/*"
+                                    chooseLabel="Upload"
+                                    uploadLabel="Submit"
+                                    cancelLabel="Cancel"
+                                    customUpload
+                                    uploadHandler={onUploadPhoto}
+                                    className={classNames({
+                                        'p-invalid': submitted && !product.photoUrl
+                                    })}
+                                />
+                                {submitted && !product.photoUrl && <small className="p-invalid">Photo is required.</small>}
 
                                 <Divider layout="horizontal" align="center">
                                     <b>OR</b>

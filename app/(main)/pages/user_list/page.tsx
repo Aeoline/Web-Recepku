@@ -19,11 +19,23 @@ import { Demo } from '@/types';
 import { firestore } from '@/utils/firebase';
 import { collection, getDocs } from 'firebase/firestore/lite';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
+const getAuthConfig = () => {
+    const token = Cookies.get('access_token');
+
+    if (!token) {
+        console.error('No token found');
+        return null;
+    }
+
+    return {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    };
+};
 
 /* @todo Used 'as any' for types here. Will fix in next version due to onSelectionChange event type issue. */
 const Crud = () => {
-
-
     const [products, setProducts] = useState([]);
     const [productDialog, setProductDialog] = useState(false);
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
@@ -39,8 +51,12 @@ const Crud = () => {
     const [radioValue, setRadioValue] = useState(product.isAdmin ? true : false);
 
     useEffect(() => {
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi
+        }
         axios
-            .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users')
+            .get('http://localhost:3001/users', config)
             .then((res: any) => {
                 const data = res.data.data;
                 setOriginalProducts(data);
@@ -87,9 +103,16 @@ const Crud = () => {
         if (product.username && product.username.trim()) {
             let _products = [...(products as any)];
             let _product = { ...product };
-            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${product.uid}`, {
+
+            const config = getAuthConfig();
+            if (!config) {
+                return; // Jika tidak ada token, hentikan eksekusi
+            }
+
+            fetch(`http://localhost:3001/users/${product.uid}`, {
                 method: 'PUT',
                 headers: {
+                    ...config.headers,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -147,10 +170,16 @@ const Crud = () => {
     const deleteProduct = () => {
         // Mengambil ID produk yang akan dihapus
         const productId = product.uid;
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi
+        }
+
 
         // Mengirim permintaan DELETE ke server
-        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${productId}`, {
-            method: 'DELETE'
+        fetch(`http://localhost:3001/users/${productId}`, {
+            method: 'DELETE',
+            headers: config.headers
         })
             .then((response) => {
                 if (response.ok) {
@@ -210,11 +239,17 @@ const Crud = () => {
     };
 
     const deleteSelectedProducts = async () => {
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi
+        }
+
         try {
             const selectedUserIds = selectedProducts.map((product) => product.uid);
             // Mengirim permintaan DELETE ke server
-            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${selectedUserIds.join(',')}`, {
-                method: 'DELETE'
+            const response = await fetch(`http://localhost:3001/users/${selectedUserIds.join(',')}`, {
+                method: 'DELETE',
+                headers: config.headers
             });
 
             if (response.ok) {
@@ -334,51 +369,6 @@ const Crud = () => {
         );
     };
 
-    const imageBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Image</span>
-                <img src={`/demo/images/product/${rowData.image}`} alt={rowData.image} className="shadow-2" width="100" />
-            </>
-        );
-    };
-
-    const priceBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Price</span>
-                {formatCurrency(rowData.price as number)}
-            </>
-        );
-    };
-
-    const categoryBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Category</span>
-                {rowData.category}
-            </>
-        );
-    };
-
-    const ratingBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Reviews</span>
-                <Rating value={rowData.rating} readOnly cancel={false} />
-            </>
-        );
-    };
-
-    const statusBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Status</span>
-                <span className={`product-badge status-${rowData.inventoryStatus?.toLowerCase()}`}>{rowData.inventoryStatus}</span>
-            </>
-        );
-    };
-
     const actionBodyTemplate = (rowData: Demo.Product) => {
         return (
             <>
@@ -392,12 +382,17 @@ const Crud = () => {
         const searchInput = event.target.value;
         setSearchInput(searchInput);
 
+        const config = getAuthConfig();
+        if (!config) {
+            return; // Jika tidak ada token, hentikan eksekusi useEffect ini
+        }
+
         if (searchInput == '' || searchInput == null || searchInput == undefined || searchInput == ' ') {
             // Jika input pencarian kosong, perbarui products dengan data asli
             setProducts([...originalProducts]);
         } else {
             // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
-            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users`)
+            fetch(`http://localhost:3001/users`, config)
                 .then((response) => response.json())
                 .then((data) => {
                     if (Array.isArray(data.data)) {
