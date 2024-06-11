@@ -4,6 +4,12 @@ import { parseCookies, destroyCookie } from "nookies";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // Bypass middleware untuk route logout
+  if (pathname === '/api/logout') {
+    return NextResponse.next();
+  }
+
   const accessToken = request.cookies.get('access_token')?.value;
   console.log(`Access token: ${accessToken}`); // Logging token
   console.log(`Pathname: ${pathname}`); // Logging pathname

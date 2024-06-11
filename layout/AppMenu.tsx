@@ -8,18 +8,27 @@ import Link from 'next/link';
 import { AppMenuItem } from '@/types';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 const AppMenu = () => {
     const router = useRouter();
     const { layoutConfig } = useContext(LayoutContext);
 
-    const handleLogout = () => {
-        // Hapus token dari cookie
-        Cookies.remove('access_token');
-
-        // Arahkan pengguna ke halaman login
-        router.push('/auth/login');
-    };
+    const handleLogout = async () => {
+        
+        try {
+          // Panggil endpoint logout di server
+      
+          // Hapus token dari cookie
+          Cookies.remove('access_token');
+      
+          // Arahkan pengguna ke halaman login
+          router.push('/auth/login');
+        } catch (error) {
+          console.error('Error during logout:', error);
+          alert('An error occurred during logout. Please try again later.');
+        }
+      };
 
     const model: AppMenuItem[] = [
         {
