@@ -28,7 +28,7 @@ const LoginPage = () => {
 
     const handleLogin = async () => {
         try {
-            const response = await axios.post('http://localhost:3001/login', loginData);
+            const response = await axios.post('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/login', loginData);
 
             if (!response.data.error) {
                 // Simpan token di cookie atau local storage

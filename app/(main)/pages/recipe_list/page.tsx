@@ -74,7 +74,7 @@ const Crud = () => {
             return; // Jika tidak ada token, hentikan eksekusi useEffect ini
         }
         axios
-            .get('http://localhost:3001/recipes', config)
+            .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', config)
             .then((res: any) => {
                 const data = res.data.data;
 
@@ -131,7 +131,7 @@ const Crud = () => {
             setProducts([...originalProducts]);
         } else {
             // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
-            fetch(`http://localhost:3001/recipes`, config)
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes`, config)
                 .then((response) => response.json())
                 .then((data) => {
                     if (Array.isArray(data.data)) {
@@ -197,7 +197,7 @@ const Crud = () => {
 
         if (product.id) {
             // Mengirim permintaan PUT ke server untuk memperbarui produk
-            fetch(`http://localhost:3001/recipes/${product.id}`, {
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${product.id}`, {
                 method: 'PUT',
                 headers: config.headers,
                 body: JSON.stringify(_product)
@@ -230,7 +230,7 @@ const Crud = () => {
                 });
         } else {
             // Mengirim permintaan POST ke server untuk membuat produk baru
-            fetch('http://localhost:3001/recipes', {
+            fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', {
                 method: 'POST',
                 headers: config.headers,
                 body: JSON.stringify(_product)
@@ -238,7 +238,7 @@ const Crud = () => {
                 .then((response) => {
                     if (response.ok) {
                         // Memperbarui data produk setelah berhasil dibuat
-                        fetch('http://localhost:3001/recipes', config) // Mengambil semua produk dari server
+                        fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', config) // Mengambil semua produk dari server
                             .then((response) => response.json())
                             .then((items) => {
                                 setProducts(items);
@@ -295,7 +295,7 @@ const Crud = () => {
         }
 
         // Mengirim permintaan DELETE ke server
-        fetch(`http://localhost:3001/recipes/${productId}`, {
+        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${productId}`, {
             method: 'DELETE',
             headers: config.headers
         })
@@ -365,7 +365,7 @@ const Crud = () => {
         }
     
         // Mengirim permintaan DELETE ke server untuk menghapus produk yang dipilih
-        fetch(`http://localhost:3001/recipes`, {
+        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes`, {
           method: 'DELETE',
           headers: config.headers,
           body: JSON.stringify({ ids: selectedProductIds })

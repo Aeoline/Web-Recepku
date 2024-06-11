@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
         },
       };
 
-      const verifyTokenURL = 'http://localhost:3001/verify-token';
+      const verifyTokenURL = 'https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/verify-token';
       const res = await fetch(verifyTokenURL, requestOption);
       const resData = await res.json();
       console.log('Verification response:', resData); // Logging response

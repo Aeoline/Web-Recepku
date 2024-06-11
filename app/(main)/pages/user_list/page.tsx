@@ -66,7 +66,7 @@ const Crud = () => {
             return; // Jika tidak ada token, hentikan eksekusi
         }
         axios
-            .get('http://localhost:3001/users', config)
+            .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users', config)
             .then((res: any) => {
                 const data = res.data.data;
                 setOriginalProducts(data);
@@ -119,7 +119,7 @@ const Crud = () => {
                 return; // Jika tidak ada token, hentikan eksekusi
             }
 
-            fetch(`http://localhost:3001/users/${product.uid}`, {
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${product.uid}`, {
                 method: 'PUT',
                 headers: {
                     ...config.headers,
@@ -187,7 +187,7 @@ const Crud = () => {
 
 
         // Mengirim permintaan DELETE ke server
-        fetch(`http://localhost:3001/users/${productId}`, {
+        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${productId}`, {
             method: 'DELETE',
             headers: config.headers
         })
@@ -257,7 +257,7 @@ const Crud = () => {
         try {
             const selectedUserIds = selectedProducts.map((product) => product.uid);
             // Mengirim permintaan DELETE ke server
-            const response = await fetch(`http://localhost:3001/users/${selectedUserIds.join(',')}`, {
+            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${selectedUserIds.join(',')}`, {
                 method: 'DELETE',
                 headers: config.headers
             });
@@ -402,7 +402,7 @@ const Crud = () => {
             setProducts([...originalProducts]);
         } else {
             // Jika input pencarian tidak kosong, lakukan pencarian dan perbarui products dengan hasil pencarian
-            fetch(`http://localhost:3001/users`, config)
+            fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users`, config)
                 .then((response) => response.json())
                 .then((data) => {
                     if (Array.isArray(data.data)) {

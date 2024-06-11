@@ -51,7 +51,7 @@ const Dashboard = () => {
           }
     
           try {
-            const response = await fetch('http://localhost:3001/getTotalRecipes', config);
+            const response = await fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getTotalRecipes', config);
             if (!response.ok) {
               throw new Error(`HTTP error ${response.status}`);
             }
@@ -73,7 +73,7 @@ const Dashboard = () => {
           }
     
           try {
-            const response = await fetch('http://localhost:3001/getTotalUsers', config);
+            const response = await fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getTotalUsers', config);
             if (!response.ok) {
               throw new Error(`HTTP error ${response.status}`);
             }
@@ -95,7 +95,7 @@ const Dashboard = () => {
           }
     
           try {
-            const response = await axios.get('http://localhost:3001/getLatestRecipes', config);
+            const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestRecipes', config);
             setLatestRecipes(response.data.data.recipe.data);
           } catch (error) {
             console.error('Error fetching latest recipes:', error);
@@ -113,7 +113,7 @@ const Dashboard = () => {
           }
     
           try {
-            const response = await axios.get('http://localhost:3001/getLatestUsers', config);
+            const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestUsers', config);
             setLatestUsers(response.data.data.user.data);
           } catch (error) {
             console.error('Error fetching latest users:', error);
