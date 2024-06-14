@@ -61,6 +61,12 @@ const Crud = () => {
     }, [router]);
 
     useEffect(() => {
+        if (product && product.isAdmin !== undefined) {
+          setRadioValue(product.isAdmin);
+        }
+      }, [product]);
+
+    useEffect(() => {
         const config = getAuthConfig();
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
@@ -486,7 +492,7 @@ const Crud = () => {
                     >
                         <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
                         {/* <Column field="uid" header="UID" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column> */}
-                        <Column field="name" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
+                        <Column field="username" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
                         <Column field="email" header="Email" sortable body={emailBodyTemplate} headerStyle={{ minWidth: '20rem' }}></Column>
                         {/* <Column header="Image" body={imageBodyTemplate}></Column>
                         <Column field="price" header="Price" body={priceBodyTemplate} sortable></Column>
