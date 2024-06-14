@@ -16,17 +16,16 @@ import Cookies from 'js-cookie';
 
 const getAuthConfig = () => {
     const token = Cookies.get('access_token');
-    
+
     if (!token) {
-      console.error('No token found');
-      return null;
+        console.error('No token found');
+        return null;
     }
 
     return {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
     };
-  };
-
+};
 
 const Dashboard = () => {
     const [products, setProducts] = useState<Demo.Product[]>([]);
@@ -45,83 +44,83 @@ const Dashboard = () => {
 
     useEffect(() => {
         async function fetchTotalRecipes() {
-          const config = getAuthConfig();
-          if (!config) {
-            return; // Jika tidak ada token, hentikan eksekusi
-          }
-    
-          try {
-            const response = await fetch('http://localhost:3001/getTotalRecipes', config);
-            if (!response.ok) {
-              throw new Error(`HTTP error ${response.status}`);
+            const config = getAuthConfig();
+            if (!config) {
+                return; // Jika tidak ada token, hentikan eksekusi
             }
-            const data = await response.json();
-            setRecipeSize(data.data.size);
-          } catch (error) {
-            console.error('Error fetching total recipes:', error);
-            // Tambahkan penanganan kesalahan lainnya, seperti menampilkan pesan error
-          }
+
+            try {
+                const response = await fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getTotalRecipes', config);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                setRecipeSize(data.data.size);
+            } catch (error) {
+                console.error('Error fetching total recipes:', error);
+                // Tambahkan penanganan kesalahan lainnya, seperti menampilkan pesan error
+            }
         }
         fetchTotalRecipes();
-      }, []);
-    
-      useEffect(() => {
+    }, []);
+
+    useEffect(() => {
         async function fetchTotalUsers() {
-          const config = getAuthConfig();
-          if (!config) {
-            return; // Jika tidak ada token, hentikan eksekusi
-          }
-    
-          try {
-            const response = await fetch('http://localhost:3001/getTotalUsers', config);
-            if (!response.ok) {
-              throw new Error(`HTTP error ${response.status}`);
+            const config = getAuthConfig();
+            if (!config) {
+                return; // Jika tidak ada token, hentikan eksekusi
             }
-            const data = await response.json();
-            setUserSize(data.data.size);
-          } catch (error) {
-            console.error('Error fetching total users:', error);
-            // Tambahkan penanganan kesalahan lainnya, seperti menampilkan pesan error
-          }
+
+            try {
+                const response = await fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getTotalUsers', config);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                setUserSize(data.data.size);
+            } catch (error) {
+                console.error('Error fetching total users:', error);
+                // Tambahkan penanganan kesalahan lainnya, seperti menampilkan pesan error
+            }
         }
         fetchTotalUsers();
-      }, []);
-    
-      useEffect(() => {
+    }, []);
+
+    useEffect(() => {
         const fetchLatestRecipes = async () => {
-          const config = getAuthConfig();
-          if (!config) {
-            return; // Jika tidak ada token, hentikan eksekusi
-          }
-    
-          try {
-            const response = await axios.get('http://localhost:3001/getLatestRecipes', config);
-            setLatestRecipes(response.data.data.recipe.data);
-          } catch (error) {
-            console.error('Error fetching latest recipes:', error);
-          }
+            const config = getAuthConfig();
+            if (!config) {
+                return; // Jika tidak ada token, hentikan eksekusi
+            }
+
+            try {
+                const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestRecipes', config);
+                setLatestRecipes(response.data.data.recipe.data);
+            } catch (error) {
+                console.error('Error fetching latest recipes:', error);
+            }
         };
-    
+
         fetchLatestRecipes();
-      }, []);
-    
-      useEffect(() => {
+    }, []);
+
+    useEffect(() => {
         const fetchLatestUsers = async () => {
-          const config = getAuthConfig();
-          if (!config) {
-            return; // Jika tidak ada token, hentikan eksekusi
-          }
-    
-          try {
-            const response = await axios.get('http://localhost:3001/getLatestUsers', config);
-            setLatestUsers(response.data.data.user.data);
-          } catch (error) {
-            console.error('Error fetching latest users:', error);
-          }
+            const config = getAuthConfig();
+            if (!config) {
+                return; // Jika tidak ada token, hentikan eksekusi
+            }
+
+            try {
+                const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestUsers', config);
+                setLatestUsers(response.data.data.user.data);
+            } catch (error) {
+                console.error('Error fetching latest users:', error);
+            }
         };
-    
+
         fetchLatestUsers();
-      }, []);
+    }, []);
 
     const formatCurrency = (value: number) => {
         return value?.toLocaleString('en-US', {
@@ -170,7 +169,7 @@ const Dashboard = () => {
                     <h5>Recent Users</h5>
                     <DataTable value={latestUsers} rows={5} paginator responsiveLayout="scroll">
                         <Column field="username" header="Username" sortable style={{ width: '40%' }} />
-                        <Column field="email" header="Email" sortable style={{ width: '40%' }}/>
+                        <Column field="email" header="Email" sortable style={{ width: '40%' }} />
                         <Column field="role" header="Role" sortable style={{ width: '35%' }} />
                     </DataTable>
                 </div>
