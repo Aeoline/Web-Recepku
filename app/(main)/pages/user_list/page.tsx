@@ -56,10 +56,16 @@ const Crud = () => {
         // Pengecekan token dan redirect jika tidak ada token
         const token = Cookies.get('access_token');
         if (!token) {
-          router.push('/auth/login');
+            router.push('/auth/login');
         }
-      }, [router]);
-      
+    }, [router]);
+
+    useEffect(() => {
+        if (product && product.isAdmin !== undefined) {
+          setRadioValue(product.isAdmin);
+        }
+      }, [product]);
+
     useEffect(() => {
         const config = getAuthConfig();
         if (!config) {
@@ -184,7 +190,6 @@ const Crud = () => {
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-
 
         // Mengirim permintaan DELETE ke server
         fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${productId}`, {
@@ -487,7 +492,7 @@ const Crud = () => {
                     >
                         <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
                         {/* <Column field="uid" header="UID" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column> */}
-                        <Column field="name" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
+                        <Column field="username" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
                         <Column field="email" header="Email" sortable body={emailBodyTemplate} headerStyle={{ minWidth: '20rem' }}></Column>
                         {/* <Column header="Image" body={imageBodyTemplate}></Column>
                         <Column field="price" header="Price" body={priceBodyTemplate} sortable></Column>

@@ -28,7 +28,6 @@ import { useRouter } from 'next/navigation';
 
 type InputValue = { value: boolean; label: string };
 
-
 const getAuthConfig = () => {
     const token = Cookies.get('access_token');
 
@@ -58,21 +57,35 @@ const Crud = () => {
     const dt = useRef<DataTable<any>>(null);
     const [originalProducts, setOriginalProducts] = useState([]);
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
+
+    const dropdownValues = [
+        { label: 'Yes', value: true },
+        { label: 'No', value: false }
+      ];
+
+
     const [dropdownValue, setDropdownValue] = useState<InputValue | null>(null);
 
     useEffect(() => {
         // Pengecekan token dan redirect jika tidak ada token
         const token = Cookies.get('access_token');
         if (!token) {
-          router.push('/auth/login');
+            router.push('/auth/login');
         }
-      }, [router]);
+    }, [router]);
+
+    useEffect(() => {
+        if (product && product.isFavorite !== undefined) {
+          setDropdownValue(product.isFavorite);
+        }
+      }, [product]);
 
     useEffect(() => {
         const config = getAuthConfig();
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi useEffect ini
         }
+
         axios
             .get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', config)
             .then((res: any) => {
@@ -96,6 +109,7 @@ const Crud = () => {
             .catch((error: any) => {
                 console.error(error);
             });
+            
     }, []);
 
     const openNew = () => {
@@ -358,45 +372,45 @@ const Crud = () => {
 
     const deleteSelectedProducts = () => {
         const selectedProductIds = selectedProducts.map((product) => product.id);
-    
+
         const config = getAuthConfig();
         if (!config) {
-          return; // Jika tidak ada token, hentikan eksekusi
+            return; // Jika tidak ada token, hentikan eksekusi
         }
-    
+
         // Mengirim permintaan DELETE ke server untuk menghapus produk yang dipilih
         fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes`, {
-          method: 'DELETE',
-          headers: config.headers,
-          body: JSON.stringify({ ids: selectedProductIds })
+            method: 'DELETE',
+            headers: config.headers,
+            body: JSON.stringify({ ids: selectedProductIds })
         })
-          .then((response) => {
-            if (response.ok) {
-              // Menghapus produk dari state
-              const updatedProducts = products.filter((product) => !selectedProductIds.includes(product.id));
-              setProducts(updatedProducts);
-              setDeleteRecipeDialog(false);
-              setSelectedProducts([]);
-              toast.current?.show({
-                severity: 'success',
-                summary: 'Successful',
-                detail: 'Products Deleted',
-                life: 3000
-              });
-            } else {
-              throw new Error('Failed to delete products');
-            }
-          })
-          .catch((error) => {
-            console.log(error);
-            toast.current?.show({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to delete products',
-              life: 3000
+            .then((response) => {
+                if (response.ok) {
+                    // Menghapus produk dari state
+                    const updatedProducts = products.filter((product) => !selectedProductIds.includes(product.id));
+                    setProducts(updatedProducts);
+                    setDeleteRecipeDialog(false);
+                    setSelectedProducts([]);
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Successful',
+                        detail: 'Products Deleted',
+                        life: 3000
+                    });
+                } else {
+                    throw new Error('Failed to delete products');
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to delete products',
+                    life: 3000
+                });
             });
-          });
-      };
+    };
 
     const onCategoryChange = (e: RadioButtonChangeEvent) => {
         let _product = { ...product };
@@ -556,10 +570,6 @@ const Crud = () => {
         </>
     );
 
-    const dropdownValues: InputValue[] = [
-        { value: true, label: 'Yes' },
-        { value: false, label: 'No' }
-    ];
 
     const handleChange = (option: InputValue | null) => {
         setDropdownValue(option);
@@ -734,7 +744,7 @@ const Crud = () => {
                                     'p-invalid': submitted && dropdownValue === null
                                 })}
                             />
-                            {/* {submitted && dropdownValue === null && !product.isFavorite && <small className="p-invalid">This Field is required.</small>} */}
+                            {submitted && dropdownValue === null && !product.isFavorite && <small className="p-invalid">This Field is required.</small>}
                         </div>
 
                         <h5>Normal Recipe</h5>

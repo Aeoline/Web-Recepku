@@ -29,7 +29,7 @@ const LoginPage = () => {
     const handleLogin = async () => {
         try {
             const response = await axios.post('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/login', loginData);
-
+            console.log('Login response:', response.data);
             if (!response.data.error) {
                 // Simpan token di cookie atau local storage
                 document.cookie = `access_token=${response.data.token}; path=/;`;
@@ -99,9 +99,7 @@ const LoginPage = () => {
                                 className="w-full mb-5"
                                 inputClassName="w-full p-3 md:w-30rem"
                             />
-                            <div className="flex align-items-center justify-content-between mb-5 gap-5">
-                                
-                            </div>
+                            <div className="flex align-items-center justify-content-between mb-5 gap-5"></div>
                             <Button label="Sign In" className="w-full p-3 text-xl" onClick={handleLogin}></Button>
                         </div>
                     </div>

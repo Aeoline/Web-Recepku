@@ -138,7 +138,7 @@ declare namespace Demo {
         username?: string;
         title?: string;
         isAdmin: boolean;
-        isFavorite:  [name: string, code: string] ;
+        isFavorite:  boolean ;
         [key: string]: string | string[] | number | boolean | undefined | ProductOrder[] | InventoryStatus;
     };
 
