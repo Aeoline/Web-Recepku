@@ -1,22 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
-import { Button } from 'primereact/button';
-import { Chart } from 'primereact/chart';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
-import { Menu } from 'primereact/menu';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ProductService } from '../../demo/service/ProductService';
-import { LayoutContext } from '../../layout/context/layoutcontext';
-import Link from 'next/link';
-import { Demo } from '@/types';
-import { ChartData, ChartOptions } from 'chart.js';
+import React, { useContext, useEffect, useState } from 'react';
+import { LayoutContext } from '../../../../layout/context/layoutcontext';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
 
 const getAuthConfig = () => {
     const token = Cookies.get('access_token');
-
     if (!token) {
         console.error('No token found');
         return null;
@@ -28,10 +21,7 @@ const getAuthConfig = () => {
 };
 
 const Dashboard = () => {
-    const [products, setProducts] = useState<Demo.Product[]>([]);
-    const menu1 = useRef<Menu>(null);
-    const menu2 = useRef<Menu>(null);
-    const [lineOptions, setLineOptions] = useState<ChartOptions>({});
+    const router = useRouter();
     const { layoutConfig } = useContext(LayoutContext);
     const [recipeSize, setRecipeSize] = useState(0);
     const [userSize, setUserSize] = useState(0);
@@ -39,8 +29,12 @@ const Dashboard = () => {
     const [latestUsers, setLatestUsers] = useState([]);
 
     useEffect(() => {
-        ProductService.getProductsSmall().then((data) => setProducts(data));
-    }, []);
+        // Pengecekan token dan redirect jika tidak ada token
+        const token = Cookies.get('access_token');
+        if (!token) {
+            router.push('/auth/login');
+        }
+    }, [router]);
 
     useEffect(() => {
         async function fetchTotalRecipes() {
@@ -113,7 +107,9 @@ const Dashboard = () => {
 
             try {
                 const response = await axios.get('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/getLatestUsers', config);
-                setLatestUsers(response.data.data.user.data);
+                const users = response.data.data.user.data;
+                console.log('Latest Users:', users); // Debugging: Log data pengguna terbaru
+                setLatestUsers(users);
             } catch (error) {
                 console.error('Error fetching latest users:', error);
             }
@@ -122,11 +118,13 @@ const Dashboard = () => {
         fetchLatestUsers();
     }, []);
 
-    const formatCurrency = (value: number) => {
-        return value?.toLocaleString('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        });
+    const roleBodyTemplate = (rowData : any) => {
+        return (
+            <>
+                <span className="p-column-title">Role</span>
+                <div>{rowData.role ? 'Admin' : 'User'}</div>
+            </>
+        );
     };
 
     return (
@@ -170,7 +168,7 @@ const Dashboard = () => {
                     <DataTable value={latestUsers} rows={5} paginator responsiveLayout="scroll">
                         <Column field="username" header="Username" sortable style={{ width: '40%' }} />
                         <Column field="email" header="Email" sortable style={{ width: '40%' }} />
-                        <Column field="role" header="Role" sortable style={{ width: '35%' }} />
+                        <Column field="role" header="Role" body={roleBodyTemplate} style={{ width: '20%' }} />
                     </DataTable>
                 </div>
             </div>
