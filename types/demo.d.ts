@@ -139,7 +139,7 @@ declare namespace Demo {
         title?: string;
         isAdmin: boolean;
         isFavorite:  boolean ;
-        [key: string]: string | string[] | number | boolean | undefined | ProductOrder[] | InventoryStatus;
+        [key: string]: number | string[] | number | boolean | undefined | ProductOrder[] | InventoryStatus;
     };
 
 

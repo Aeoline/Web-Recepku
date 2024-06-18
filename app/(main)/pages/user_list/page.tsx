@@ -43,7 +43,7 @@ const Crud = () => {
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
     const [deleteProductsDialog, setDeleteProductsDialog] = useState(false);
     const [product, setProduct] = useState({} as any);
-    const [selectedProducts, setSelectedProducts] = useState(null);
+    const [selectedProducts, setSelectedProducts] = useState([]);
     const [submitted, setSubmitted] = useState(false);
     const [globalFilter, setGlobalFilter] = useState('');
     const [searchInput, setSearchInput] = useState('');
@@ -117,7 +117,7 @@ const Crud = () => {
         setSubmitted(true);
 
         if (product.username && product.username.trim()) {
-            let _products = [...(products as any)];
+            let _products: any[] = [];
             let _product = { ...product };
 
             const config = getAuthConfig();
@@ -141,7 +141,6 @@ const Crud = () => {
                     if (response.ok) {
                         const index = findIndexById(product.uid);
                         _products[index] = _product;
-                        setProducts(_products);
                         setProductDialog(false);
                         setProduct('emptyProduct');
                         toast.current?.show({
@@ -185,7 +184,7 @@ const Crud = () => {
 
     const deleteProduct = () => {
         // Mengambil ID produk yang akan dihapus
-        const productId = product.uid;
+        const productId : any = product.uid;
         const config = getAuthConfig();
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
@@ -199,7 +198,7 @@ const Crud = () => {
             .then((response) => {
                 if (response.ok) {
                     // Menghapus produk dari state
-                    const updatedProducts = products.filter((val) => val.uid !== productId);
+                    const updatedProducts = products.filter((val : any) => val.uid !== productId);
                     setProducts(updatedProducts);
                     setDeleteProductDialog(false);
                     setProduct('emptyProduct');
@@ -258,18 +257,22 @@ const Crud = () => {
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-
+    
         try {
-            const selectedUserIds = selectedProducts.map((product) => product.uid);
+            if (!selectedProducts) {
+                return; // Add null check for selectedProducts
+            }
+    
+            const selectedUserIds = selectedProducts.map((product : any) => product.uid);
             // Mengirim permintaan DELETE ke server
             const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/users/${selectedUserIds.join(',')}`, {
                 method: 'DELETE',
                 headers: config.headers
             });
-
+    
             if (response.ok) {
                 // Menghapus produk dari state
-                const updatedProducts = products.filter((val) => !selectedUserIds.includes(val.uid));
+                const updatedProducts = products.filter((val : any) => !selectedUserIds.includes(val.uid));
                 setProducts(updatedProducts);
                 setDeleteProductDialog(false);
                 setProduct('emptyProduct');
@@ -291,18 +294,13 @@ const Crud = () => {
                 life: 3000
             });
         }
-
+    
         toast.current?.show({
             severity: 'success',
             summary: 'Successful',
             detail: 'Users Deleted',
             life: 3000
         });
-    };
-
-    const handleRadioChange = (e) => {
-        const { value } = e.target;
-        setRadioValue(value === 'true');
     };
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {

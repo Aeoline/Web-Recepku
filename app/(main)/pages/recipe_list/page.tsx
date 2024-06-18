@@ -42,14 +42,14 @@ const getAuthConfig = () => {
 };
 
 const Crud = () => {
-    let emptyProduct: Demo.Product = {};
+;
     const router = useRouter();
-    const [products, setProducts] = useState([]);
+    const [products, setProducts] = useState<Demo.Product[]>([]);
     const [recipeDialog, setRecipeDialog] = useState(false);
     const [deleterecipeDialog, setDeleterecipeDialog] = useState(false);
     const [deleteProductsDialog, setDeleteRecipeDialog] = useState(false);
-    const [product, setProduct] = useState<Demo.Product>(emptyProduct);
-    const [selectedProducts, setSelectedProducts] = useState(null);
+    const [product, setProduct] = useState({} as any);
+    const [selectedProducts, setSelectedProducts] = useState({} as any);
     const [submitted, setSubmitted] = useState(false);
     const [globalFilter, setGlobalFilter] = useState('');
     const [searchInput, setSearchInput] = useState('');
@@ -112,6 +112,7 @@ const Crud = () => {
             
     }, []);
 
+    const emptyProduct = {} as any; // Declare emptyProduct variable
     const openNew = () => {
         setProduct(emptyProduct);
         setSubmitted(false);
@@ -184,13 +185,13 @@ const Crud = () => {
 
     const saveProduct = () => {
         setSubmitted(true);
-
+    
         // Validasi bahwa semua properti tidak kosong
         const requiredFields = ['title', 'slug', 'description', 'calories', 'healthyCalories', 'ingredients', 'healthyIngredients', 'steps', 'healthySteps', 'photoUrl'];
-
+    
         // Memeriksa apakah ada field yang kosong
         const isEmptyField = requiredFields.some((field) => !product[field] || product[field].toString().trim() === '');
-
+    
         if (isEmptyField) {
             toast.current?.show({
                 severity: 'error',
@@ -200,15 +201,15 @@ const Crud = () => {
             });
             return;
         }
-
-        let _products = [...products];
+    
+        let _products = Array.isArray(products) ? [...products] : [];
         let _product = { ...product, isFavorite: dropdownValue };
-
+    
         const config = getAuthConfig();
         if (!config) {
-            return; // Jika tidak ada token, hentikan eksekusi useEffect ini
+            return; // Jika tidak ada token, hentikan eksekusi
         }
-
+    
         if (product.id) {
             // Mengirim permintaan PUT ke server untuk memperbarui produk
             fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${product.id}`, {
@@ -255,9 +256,14 @@ const Crud = () => {
                         fetch('https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes', config) // Mengambil semua produk dari server
                             .then((response) => response.json())
                             .then((items) => {
-                                setProducts(items);
+                                if (Array.isArray(items)) {
+                                    setProducts(items);
+                                } else {
+                                    console.error('Fetched products are not an array:', items);
+                                    setProducts([]);
+                                }
                                 setRecipeDialog(false);
-                                setProduct(emptyProduct);
+                                // setProduct(emptyProduct);
                                 toast.current?.show({
                                     severity: 'success',
                                     summary: 'Successful',
@@ -289,6 +295,7 @@ const Crud = () => {
                 });
         }
     };
+    
 
     const editRecipe = (product: Demo.Product) => {
         setProduct({ ...product });
@@ -319,7 +326,7 @@ const Crud = () => {
                     const updatedProducts = products.filter((val) => val.id !== productId);
                     setProducts(updatedProducts);
                     setDeleterecipeDialog(false);
-                    setProduct(emptyProduct);
+                    // setProduct(emptyProduct);
                     toast.current?.show({
                         severity: 'success',
                         summary: 'Successful',
@@ -370,48 +377,53 @@ const Crud = () => {
         setDeleteRecipeDialog(true);
     };
 
-    const deleteSelectedProducts = () => {
-        const selectedProductIds = selectedProducts.map((product) => product.id);
-
+    const deleteSelectedProducts = async () => {
         const config = getAuthConfig();
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-
-        // Mengirim permintaan DELETE ke server untuk menghapus produk yang dipilih
-        fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes`, {
-            method: 'DELETE',
-            headers: config.headers,
-            body: JSON.stringify({ ids: selectedProductIds })
-        })
-            .then((response) => {
-                if (response.ok) {
-                    // Menghapus produk dari state
-                    const updatedProducts = products.filter((product) => !selectedProductIds.includes(product.id));
-                    setProducts(updatedProducts);
-                    setDeleteRecipeDialog(false);
-                    setSelectedProducts([]);
-                    toast.current?.show({
-                        severity: 'success',
-                        summary: 'Successful',
-                        detail: 'Products Deleted',
-                        life: 3000
-                    });
-                } else {
-                    throw new Error('Failed to delete products');
-                }
-            })
-            .catch((error) => {
-                console.log(error);
-                toast.current?.show({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to delete products',
-                    life: 3000
+    
+        try {
+            if (!selectedProducts || selectedProducts.length === 0) {
+                return; // Add null check for selectedProducts
+            }
+    
+            const selectedProductsIds = selectedProducts.map((product: any) => product.id); // Menggunakan any untuk product
+            
+            // Loop through each selectedProductId and send a DELETE request for each
+            for (const id of selectedProductsIds) {
+                const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${id}`, {
+                    method: 'DELETE',
+                    headers: config.headers
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to remove recipe with id: ${id}`);
+                }
+            }
+            
+            // Menghapus produk dari state
+            const updatedProducts = products.filter((val: any) => !selectedProductsIds.includes(val.id)); // Menggunakan any untuk val
+            setProducts(updatedProducts);
+            setDeleteRecipeDialog(false);
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Successful',
+                detail: 'Recipes Removed',
+                life: 3000
             });
+        } catch (error) {
+            console.log(error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to remove recipes',
+                life: 3000
+            });
+        }
     };
-
+    
+    
     const onCategoryChange = (e: RadioButtonChangeEvent) => {
         let _product = { ...product };
         _product['category'] = e.value;
@@ -585,19 +597,23 @@ const Crud = () => {
         // Implement your actual database update logic here
     };
 
-    const onUploadPhoto = (event) => {
+    const onUploadPhoto = (event: any) => {
         const file = event.files[0];
-
-        // Lakukan pengolahan atau unggah file ke server di sini
-        // Setelah selesai, dapatkan URL foto yang diunggah dan simpan di state produk
+    
+        // Lakukan pengolahan atau unggah file
+        // Setelah selesai, dapatkan URL dari file yang diunggah
         const reader = new FileReader();
         reader.onload = (e) => {
-            const uploadedPhotoUrl = e.target.result;
-            console.log(uploadedPhotoUrl); // Periksa URL foto yang diunggah di konsol
-            setProduct({ ...product, photoUrl: uploadedPhotoUrl });
+            const target = e.target as FileReader;
+            if (target) {
+                const uploadedPhotoUrl = target.result;
+                console.log(uploadedPhotoUrl); // Periksa URL foto yang diunggah di konsol
+                setProduct({ ...product, photoUrl: uploadedPhotoUrl });
+            }
         };
         reader.readAsDataURL(file);
     };
+    
 
     const onChipsChange = (value: string[], name: string) => {
         let _product = { ...product };
@@ -766,7 +782,10 @@ const Crud = () => {
                             <Chips
                                 id="ingredients"
                                 value={product.ingredients}
-                                onChange={(e) => onChipsChange(e.value, 'ingredients')}
+                                onChange={(e) => {
+                                    const value = e.value ?? [];
+                                    onChipsChange(value, 'ingredients');
+                                }}
                                 required
                                 className={classNames({
                                     'p-invalid': submitted && (!product.ingredients || product.ingredients.length === 0)
@@ -780,7 +799,10 @@ const Crud = () => {
                             <Chips
                                 id="steps"
                                 value={product.steps}
-                                onChange={(e) => onChipsChange(e.value, 'steps')}
+                                onChange={(e) => {
+                                    const value = e.value ?? [];
+                                    onChipsChange(value, 'steps');
+                                }}
                                 required
                                 className={classNames({
                                     'p-invalid': submitted && (!product.steps || product.steps.length === 0)
@@ -808,7 +830,10 @@ const Crud = () => {
                             <Chips
                                 id="healthyIngredients"
                                 value={product.healthyIngredients}
-                                onChange={(e) => onChipsChange(e.value, 'healthyIngredients')}
+                                onChange={(e) => {
+                                    const value = e.value ?? [];
+                                    onChipsChange(value, 'healthyIngredients');
+                                }}
                                 required
                                 className={classNames({
                                     'p-invalid': submitted && (!product.healthyIngredients || product.healthyIngredients.length === 0)
@@ -822,7 +847,10 @@ const Crud = () => {
                             <Chips
                                 id="healthySteps"
                                 value={product.healthySteps}
-                                onChange={(e) => onChipsChange(e.value, 'healthySteps')}
+                                onChange={(e) => {
+                                    const value = e.value ?? [];
+                                    onChipsChange(value, 'healthySteps');
+                                }}
                                 required
                                 className={classNames({
                                     'p-invalid': submitted && (!product.healthySteps || product.healthySteps.length === 0)
