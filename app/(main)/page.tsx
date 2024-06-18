@@ -21,7 +21,6 @@ const getAuthConfig = () => {
 
 const Dashboard = () => {
     const router = useRouter();
-    const { layoutConfig } = useContext(LayoutContext);
     const [recipeSize, setRecipeSize] = useState(0);
     const [userSize, setUserSize] = useState(0);
     const [latestRecipes, setLatestRecipes] = useState([]);
