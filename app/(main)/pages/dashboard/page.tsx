@@ -3,7 +3,6 @@
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
 import React, { useContext, useEffect, useState } from 'react';
-import { LayoutContext } from '../../../../layout/context/layoutcontext';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
@@ -22,7 +21,6 @@ const getAuthConfig = () => {
 
 const Dashboard = () => {
     const router = useRouter();
-    const { layoutConfig } = useContext(LayoutContext);
     const [recipeSize, setRecipeSize] = useState(0);
     const [userSize, setUserSize] = useState(0);
     const [latestRecipes, setLatestRecipes] = useState([]);
