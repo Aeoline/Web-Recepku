@@ -42,7 +42,6 @@ const getAuthConfig = () => {
 };
 
 const Crud = () => {
-;
     const router = useRouter();
     const [products, setProducts] = useState<Demo.Product[]>([]);
     const [recipeDialog, setRecipeDialog] = useState(false);
@@ -61,8 +60,7 @@ const Crud = () => {
     const dropdownValues = [
         { label: 'Yes', value: true },
         { label: 'No', value: false }
-      ];
-
+    ];
 
     const [dropdownValue, setDropdownValue] = useState<InputValue | null>(null);
 
@@ -76,9 +74,9 @@ const Crud = () => {
 
     useEffect(() => {
         if (product && product.isFavorite !== undefined) {
-          setDropdownValue(product.isFavorite);
+            setDropdownValue(product.isFavorite);
         }
-      }, [product]);
+    }, [product]);
 
     useEffect(() => {
         const config = getAuthConfig();
@@ -109,7 +107,6 @@ const Crud = () => {
             .catch((error: any) => {
                 console.error(error);
             });
-            
     }, []);
 
     const emptyProduct = {} as any; // Declare emptyProduct variable
@@ -185,13 +182,13 @@ const Crud = () => {
 
     const saveProduct = () => {
         setSubmitted(true);
-    
+
         // Validasi bahwa semua properti tidak kosong
         const requiredFields = ['title', 'slug', 'description', 'calories', 'healthyCalories', 'ingredients', 'healthyIngredients', 'steps', 'healthySteps', 'photoUrl'];
-    
+
         // Memeriksa apakah ada field yang kosong
         const isEmptyField = requiredFields.some((field) => !product[field] || product[field].toString().trim() === '');
-    
+
         if (isEmptyField) {
             toast.current?.show({
                 severity: 'error',
@@ -201,15 +198,15 @@ const Crud = () => {
             });
             return;
         }
-    
+
         let _products = Array.isArray(products) ? [...products] : [];
         let _product = { ...product, isFavorite: dropdownValue };
-    
+
         const config = getAuthConfig();
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-    
+
         if (product.id) {
             // Mengirim permintaan PUT ke server untuk memperbarui produk
             fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${product.id}`, {
@@ -223,13 +220,13 @@ const Crud = () => {
                         _products[index] = _product;
                         setProducts(_products);
                         setRecipeDialog(false);
-                        setProduct(emptyProduct);
                         toast.current?.show({
                             severity: 'success',
                             summary: 'Successful',
                             detail: 'Product Updated',
                             life: 3000
                         });
+                        window.location.reload(); // Reload halaman setelah produk berhasil diperbarui
                     } else {
                         throw new Error('Failed to update product');
                     }
@@ -263,13 +260,13 @@ const Crud = () => {
                                     setProducts([]);
                                 }
                                 setRecipeDialog(false);
-                                // setProduct(emptyProduct);
                                 toast.current?.show({
                                     severity: 'success',
                                     summary: 'Successful',
                                     detail: 'Product Created',
                                     life: 3000
                                 });
+                                window.location.reload(); // Reload halaman setelah produk berhasil dibuat
                             })
                             .catch((error) => {
                                 console.log(error);
@@ -295,7 +292,6 @@ const Crud = () => {
                 });
         }
     };
-    
 
     const editRecipe = (product: Demo.Product) => {
         setProduct({ ...product });
@@ -326,7 +322,7 @@ const Crud = () => {
                     const updatedProducts = products.filter((val) => val.id !== productId);
                     setProducts(updatedProducts);
                     setDeleterecipeDialog(false);
-                    // setProduct(emptyProduct);
+                    setProduct(emptyProduct);
                     toast.current?.show({
                         severity: 'success',
                         summary: 'Successful',
@@ -382,48 +378,52 @@ const Crud = () => {
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-    
+
         try {
-            if (!selectedProducts || selectedProducts.length === 0) {
+            if (!selectedProducts) {
                 return; // Add null check for selectedProducts
             }
-    
+
             const selectedProductsIds = selectedProducts.map((product: any) => product.id); // Menggunakan any untuk product
-            
+
             // Loop through each selectedProductId and send a DELETE request for each
-            for (const id of selectedProductsIds) {
-                const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${id}`, {
-                    method: 'DELETE',
-                    headers: config.headers
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to remove recipe with id: ${id}`);
-                }
-            }
-            
-            // Menghapus produk dari state
-            const updatedProducts = products.filter((val: any) => !selectedProductsIds.includes(val.id)); // Menggunakan any untuk val
-            setProducts(updatedProducts);
-            setDeleteRecipeDialog(false);
-            toast.current?.show({
-                severity: 'success',
-                summary: 'Successful',
-                detail: 'Recipes Removed',
-                life: 3000
+            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedProductsIds.join(',')}`, {
+                method: 'DELETE',
+                headers: config.headers
             });
+
+            if (response.ok) {
+                // Menghapus produk dari state
+                const updatedProducts = products.filter((val: any) => !selectedProductsIds.includes(val.id));
+                setProducts(updatedProducts);
+                setDeleteRecipeDialog(false);
+                // setProduct('emptyProduct');
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'User Removed',
+                    life: 3000
+                });
+            } else {
+                throw new Error('Failed to remove recipe');
+            }
         } catch (error) {
             console.log(error);
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'Failed to remove recipes',
+                detail: 'Failed to remove recipe',
                 life: 3000
             });
         }
+        toast.current?.show({
+            severity: 'success',
+            summary: 'Successful',
+            detail: 'Users Deleted',
+            life: 3000
+        });
     };
-    
-    
+
     const onCategoryChange = (e: RadioButtonChangeEvent) => {
         let _product = { ...product };
         _product['category'] = e.value;
@@ -582,7 +582,6 @@ const Crud = () => {
         </>
     );
 
-
     const handleChange = (option: InputValue | null) => {
         setDropdownValue(option);
         // Update the database with the new value
@@ -599,7 +598,7 @@ const Crud = () => {
 
     const onUploadPhoto = (event: any) => {
         const file = event.files[0];
-    
+
         // Lakukan pengolahan atau unggah file
         // Setelah selesai, dapatkan URL dari file yang diunggah
         const reader = new FileReader();
@@ -613,7 +612,6 @@ const Crud = () => {
         };
         reader.readAsDataURL(file);
     };
-    
 
     const onChipsChange = (value: string[], name: string) => {
         let _product = { ...product };

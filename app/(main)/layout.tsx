@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Layout from '../../layout/layout';
+import React, { Suspense } from 'react';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -9,7 +10,6 @@ export const metadata: Metadata = {
     title: 'Recepku Admin Panel',
     description: 'The ultimate collection of design-agnostic, flexible and accessible React UI Components.',
     robots: { index: false, follow: false },
-    viewport: { initialScale: 1, width: 'device-width' },
     openGraph: {
         type: 'website',
         title: 'PrimeReact SAKAI-REACT',
@@ -23,6 +23,17 @@ export const metadata: Metadata = {
     }
 };
 
+export const viewport = {
+    initialScale: 1,
+    width: 'device-width'
+};
+
 export default function AppLayout({ children }: AppLayoutProps) {
-    return <Layout>{children}</Layout>;
+    return (
+        <Layout>
+            <Suspense fallback={<div>Loading...</div>}>
+                {children}
+            </Suspense>
+        </Layout>
+    );
 }
