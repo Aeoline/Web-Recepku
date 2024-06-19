@@ -47,6 +47,7 @@ const Crud = () => {
     const [recipeDialog, setRecipeDialog] = useState(false);
     const [deleterecipeDialog, setDeleterecipeDialog] = useState(false);
     const [deleteProductsDialog, setDeleteRecipeDialog] = useState(false);
+    const [addPhotoDialog, setAddPhotoDialog] = useState(false);
     const [product, setProduct] = useState({} as any);
     const [selectedProducts, setSelectedProducts] = useState({} as any);
     const [submitted, setSubmitted] = useState(false);
@@ -55,7 +56,9 @@ const Crud = () => {
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<any>>(null);
     const [originalProducts, setOriginalProducts] = useState([]);
-    const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
+    const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
+    const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
+    const fileUploadRef = useRef<any>(null);
 
     const dropdownValues = [
         { label: 'Yes', value: true },
@@ -599,24 +602,54 @@ const Crud = () => {
     const onUploadPhoto = (event: any) => {
         const file = event.files[0];
 
-        // Lakukan pengolahan atau unggah file
-        // Setelah selesai, dapatkan URL dari file yang diunggah
         const reader = new FileReader();
         reader.onload = (e) => {
             const target = e.target as FileReader;
-            if (target) {
-                const uploadedPhotoUrl = target.result;
-                console.log(uploadedPhotoUrl); // Periksa URL foto yang diunggah di konsol
-                setProduct({ ...product, photoUrl: uploadedPhotoUrl });
+            if (target.result) {
+                const uploadedPhotoUrl = target.result as string;
+                setUploadedPhotoUrl(uploadedPhotoUrl);
+                setAddPhotoDialog(true); // Tampilkan dialog konfirmasi
             }
         };
         reader.readAsDataURL(file);
     };
 
+    const resetFileInput = () => {
+        if (fileUploadRef.current) {
+            fileUploadRef.current.clear(); // Reset input file
+        }
+    };
+
+    const hideAddPhotoDialog = () => {
+        setAddPhotoDialog(false);
+        setUploadedPhotoUrl(null); // Reset state jika dialog ditutup
+        resetFileInput(); // Reset input file
+    };
+
+    const confirmAddPhoto = () => {
+        setProduct({ ...product, photoUrl: uploadedPhotoUrl as string });
+        setAddPhotoDialog(false);
+        setUploadedPhotoUrl(null); // Reset the uploadedPhotoUrl state after confirming
+        resetFileInput(); // Reset input file
+    };
+
+    const addPhotoDialogFooter = (
+        <>
+            <Button label="No" icon="pi pi-times" text onClick={hideAddPhotoDialog} />
+            <Button label="Yes" icon="pi pi-check" text onClick={confirmAddPhoto} />
+        </>
+    );
+
     const onChipsChange = (value: string[], name: string) => {
         let _product = { ...product };
         _product[name] = value;
         setProduct(_product);
+    };
+
+    const triggerFileUpload = () => {
+        if (fileUploadRef.current) {
+            fileUploadRef.current.fileInput.click(); // Paksa buka dialog file picker
+        }
     };
 
     return (
@@ -658,7 +691,7 @@ const Crud = () => {
                         <div className="grid">
                             <div className="col-5 flex align-items-center justify-content-center">
                                 <div className="p-fluid">
-                                    <div className="field">{product.photoUrl && <img src={product.photoUrl.toString()} alt={product.photoUrl?.toString()} width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}</div>
+                                    <div className="field">{product.photoUrl && <img src={product.photoUrl} alt="Uploaded" width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}</div>
                                 </div>
                             </div>
                             <div className="col-1">
@@ -666,37 +699,35 @@ const Crud = () => {
                             </div>
                             <div className="col-5 items-center justify-center">
                                 <FileUpload
+                                    ref={fileUploadRef} // Tambahkan ref ke FileUpload
                                     id="photo"
                                     name="photo"
                                     mode="basic"
                                     accept="image/*"
                                     chooseLabel="Upload"
-                                    uploadLabel="Submit"
-                                    cancelLabel="Cancel"
                                     customUpload
+                                    auto
                                     uploadHandler={onUploadPhoto}
                                     className={classNames({
                                         'p-invalid': submitted && !product.photoUrl
                                     })}
                                 />
-                                {submitted && !product.photoUrl && <small className="p-invalid">Photo is required.</small>}
-
+                               
                                 <Divider layout="horizontal" align="center">
                                     <b>OR</b>
                                 </Divider>
                                 <div className="field">
                                     <label htmlFor="photoUrl">PhotoUrl</label>
                                     <InputText
-                                        id="name"
-                                        value={product.photoUrl?.toString() ?? ''}
-                                        onChange={(e) => onInputChange(e, 'photoUrl')}
+                                        id="photoUrl"
+                                        value={product.photoUrl || ''}
+                                        onChange={(e) => setProduct({ ...product, photoUrl: e.target.value })}
                                         required
                                         autoFocus
                                         className={classNames({
                                             'p-invalid': submitted && !product.photoUrl
                                         })}
                                     />
-                                    {/* {submitted && !product.title && <small className="p-invalid">Name is required.</small>} */}
                                 </div>
                             </div>
                         </div>
@@ -764,10 +795,10 @@ const Crud = () => {
                         <h5>Normal Recipe</h5>
                         <div className="field">
                             <label htmlFor="calories">Calories</label>
-                            <InputNumber
+                            <InputTextarea
                                 id="calories"
                                 value={product.calories}
-                                onValueChange={(e) => onInputNumberChange(e, 'calories')}
+                                onChange={(e) => onInputChange(e, 'calories')}
                                 className={classNames({
                                     'p-invalid': submitted && !product.calories
                                 })}
@@ -812,10 +843,10 @@ const Crud = () => {
                         <h5>Healthy Recipe</h5>
                         <div className="field">
                             <label htmlFor="healthyCalories">Calories</label>
-                            <InputNumber
+                            <InputTextarea
                                 id="healthyCalories"
                                 value={product.healthyCalories}
-                                onValueChange={(e) => onInputNumberChange(e, 'healthyCalories')}
+                                onChange={(e) => onInputChange(e, 'healthyCalories')}
                                 className={classNames({
                                     'p-invalid': submitted && !product.healthyCalories
                                 })}
@@ -873,6 +904,13 @@ const Crud = () => {
                         <div className="flex align-items-center justify-content-center">
                             <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                             {product && <span>Are you sure you want to delete the selected products?</span>}
+                        </div>
+                    </Dialog>
+
+                    <Dialog visible={addPhotoDialog} style={{ width: '450px' }} header="Confirm" modal footer={addPhotoDialogFooter} onHide={hideAddPhotoDialog}>
+                        <div className="flex align-items-center justify-content-center">
+                            <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                            {product && <span>Are you sure you want to use this photo?</span>}
                         </div>
                     </Dialog>
                 </div>
