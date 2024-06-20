@@ -382,51 +382,51 @@ const Crud = () => {
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-
+    
         try {
             if (!selectedProducts) {
                 return; // Add null check for selectedProducts
             }
-
-            const selectedProductsIds = selectedProducts.map((product: any) => product.id); // Menggunakan any untuk product
-
-            // Loop through each selectedProductId and send a DELETE request for each
-            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedProductsIds.join(',')}`, {
+    
+            // Filter out invalid IDs
+            const selectedRecipeIds = selectedProducts.map((product : any) => product.id).filter(id => id);
+            
+            // Ensure there are valid IDs to delete
+            if (selectedRecipeIds.length === 0) {
+                throw new Error('No valid recipes selected for deletion');
+            }
+    
+            // Mengirim permintaan DELETE ke server
+            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedRecipeIds.join(',')}`, {
                 method: 'DELETE',
                 headers: config.headers
             });
-
+    
             if (response.ok) {
                 // Menghapus produk dari state
-                const updatedProducts = products.filter((val: any) => !selectedProductsIds.includes(val.id));
+                const updatedProducts = products.filter((val) => !selectedRecipeIds.includes(val.id));
                 setProducts(updatedProducts);
                 setDeleteRecipeDialog(false);
-                // setProduct('emptyProduct');
+                setProduct('emptyProduct');
                 toast.current?.show({
                     severity: 'success',
                     summary: 'Successful',
-                    detail: 'User Removed',
+                    detail: 'Recipes Removed',
                     life: 3000
                 });
             } else {
-                throw new Error('Failed to remove recipe');
+                throw new Error('Failed to remove recipes');
             }
         } catch (error) {
-            console.log(error);
+            console.log(error as Error);
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'Failed to remove recipe',
                 life: 3000
             });
         }
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Successful',
-            detail: 'Users Deleted',
-            life: 3000
-        });
     };
+    
 
     const onCategoryChange = (e: RadioButtonChangeEvent) => {
         let _product = { ...product };
@@ -713,7 +713,7 @@ const Crud = () => {
                                         'p-invalid': submitted && !product.photoUrl
                                     })}
                                 />
-                               
+
                                 <Divider layout="horizontal" align="center">
                                     <b>OR</b>
                                 </Divider>
