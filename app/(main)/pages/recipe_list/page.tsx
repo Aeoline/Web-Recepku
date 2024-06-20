@@ -25,6 +25,7 @@ import { Divider } from 'primereact/divider';
 import { Chips } from 'primereact/chips';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import './styles.css';
 
 type InputValue = { value: boolean; label: string };
 
@@ -47,6 +48,7 @@ const Crud = () => {
     const [recipeDialog, setRecipeDialog] = useState(false);
     const [deleterecipeDialog, setDeleterecipeDialog] = useState(false);
     const [deleteProductsDialog, setDeleteRecipeDialog] = useState(false);
+    const [addPhotoDialog, setAddPhotoDialog] = useState(false);
     const [product, setProduct] = useState({} as any);
     const [selectedProducts, setSelectedProducts] = useState({} as any);
     const [submitted, setSubmitted] = useState(false);
@@ -55,7 +57,9 @@ const Crud = () => {
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<any>>(null);
     const [originalProducts, setOriginalProducts] = useState([]);
-    const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
+    const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
+    const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
+    const fileUploadRef = useRef<any>(null);
 
     const dropdownValues = [
         { label: 'Yes', value: true },
@@ -378,57 +382,53 @@ const Crud = () => {
         if (!config) {
             return; // Jika tidak ada token, hentikan eksekusi
         }
-
+    
         try {
             if (!selectedProducts) {
                 return; // Add null check for selectedProducts
             }
-
-            const selectedProductsIds = selectedProducts.map((product: any) => product.id); // Menggunakan any untuk product
-
-            // Loop through each selectedProductId and send a DELETE request for each
-            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedProductsIds.join(',')}`, {
+    
+            // Filter out invalid IDs
+            const selectedRecipeIds = selectedProducts.map((product: { id: string }) => product.id).filter((id: string) => id);
+            
+            // Ensure there are valid IDs to delete
+            if (selectedRecipeIds.length === 0) {
+                throw new Error('No valid recipes selected for deletion');
+            }
+    
+            // Mengirim permintaan DELETE ke server
+            const response = await fetch(`https://backend-recepku-oop-rnrqe2wc3a-et.a.run.app/recipes/${selectedRecipeIds.join(',')}`, {
                 method: 'DELETE',
                 headers: config.headers
             });
-
+    
             if (response.ok) {
                 // Menghapus produk dari state
-                const updatedProducts = products.filter((val: any) => !selectedProductsIds.includes(val.id));
+                const updatedProducts = products.filter((val) => !selectedRecipeIds.includes(val.id));
                 setProducts(updatedProducts);
                 setDeleteRecipeDialog(false);
-                // setProduct('emptyProduct');
+                setProduct('emptyProduct');
                 toast.current?.show({
                     severity: 'success',
                     summary: 'Successful',
-                    detail: 'User Removed',
+                    detail: 'Recipes Removed',
                     life: 3000
                 });
             } else {
-                throw new Error('Failed to remove recipe');
+                throw new Error('Failed to remove recipes');
             }
         } catch (error) {
-            console.log(error);
+            console.log(error as Error);
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'Failed to remove recipe',
                 life: 3000
             });
         }
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Successful',
-            detail: 'Users Deleted',
-            life: 3000
-        });
     };
+    
 
-    const onCategoryChange = (e: RadioButtonChangeEvent) => {
-        let _product = { ...product };
-        _product['category'] = e.value;
-        setProduct(_product);
-    };
+
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
         const val = (e.target && e.target.value) || '';
@@ -439,7 +439,7 @@ const Crud = () => {
     };
 
     const onInputNumberChange = (e: InputNumberValueChangeEvent, name: string) => {
-        const val = e.value || 0;
+        const val = (e.target && e.target.value) || 0;
         let _product = { ...product };
         _product[`${name}`] = val;
 
@@ -527,23 +527,6 @@ const Crud = () => {
         );
     };
 
-    const ratingBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Reviews</span>
-                <Rating value={rowData.rating} readOnly cancel={false} />
-            </>
-        );
-    };
-
-    const statusBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Status</span>
-                <span className={`product-badge status-${rowData.inventoryStatus?.toLowerCase()}`}>{rowData.inventoryStatus}</span>
-            </>
-        );
-    };
 
     const actionBodyTemplate = (rowData: Demo.Product) => {
         return (
@@ -599,25 +582,50 @@ const Crud = () => {
     const onUploadPhoto = (event: any) => {
         const file = event.files[0];
 
-        // Lakukan pengolahan atau unggah file
-        // Setelah selesai, dapatkan URL dari file yang diunggah
         const reader = new FileReader();
         reader.onload = (e) => {
             const target = e.target as FileReader;
-            if (target) {
-                const uploadedPhotoUrl = target.result;
-                console.log(uploadedPhotoUrl); // Periksa URL foto yang diunggah di konsol
-                setProduct({ ...product, photoUrl: uploadedPhotoUrl });
+            if (target.result) {
+                const uploadedPhotoUrl = target.result as string;
+                setUploadedPhotoUrl(uploadedPhotoUrl);
+                setAddPhotoDialog(true); // Tampilkan dialog konfirmasi
             }
         };
         reader.readAsDataURL(file);
     };
+
+    const resetFileInput = () => {
+        if (fileUploadRef.current) {
+            fileUploadRef.current.clear(); // Reset input file
+        }
+    };
+
+    const hideAddPhotoDialog = () => {
+        setAddPhotoDialog(false);
+        setUploadedPhotoUrl(null); // Reset state jika dialog ditutup
+        resetFileInput(); // Reset input file
+    };
+
+    const confirmAddPhoto = () => {
+        setProduct({ ...product, photoUrl: uploadedPhotoUrl as string });
+        setAddPhotoDialog(false);
+        setUploadedPhotoUrl(null); // Reset the uploadedPhotoUrl state after confirming
+        resetFileInput(); // Reset input file
+    };
+
+    const addPhotoDialogFooter = (
+        <>
+            <Button label="No" icon="pi pi-times" text onClick={hideAddPhotoDialog} />
+            <Button label="Yes" icon="pi pi-check" text onClick={confirmAddPhoto} />
+        </>
+    );
 
     const onChipsChange = (value: string[], name: string) => {
         let _product = { ...product };
         _product[name] = value;
         setProduct(_product);
     };
+
 
     return (
         <div className="grid crud-demo">
@@ -658,7 +666,7 @@ const Crud = () => {
                         <div className="grid">
                             <div className="col-5 flex align-items-center justify-content-center">
                                 <div className="p-fluid">
-                                    <div className="field">{product.photoUrl && <img src={product.photoUrl.toString()} alt={product.photoUrl?.toString()} width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}</div>
+                                    <div className="field">{product.photoUrl && <img src={product.photoUrl} alt="Uploaded" width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}</div>
                                 </div>
                             </div>
                             <div className="col-1">
@@ -666,20 +674,19 @@ const Crud = () => {
                             </div>
                             <div className="col-5 items-center justify-center">
                                 <FileUpload
+                                    ref={fileUploadRef} // Tambahkan ref ke FileUpload
                                     id="photo"
                                     name="photo"
                                     mode="basic"
                                     accept="image/*"
                                     chooseLabel="Upload"
-                                    uploadLabel="Submit"
-                                    cancelLabel="Cancel"
                                     customUpload
+                                    auto
                                     uploadHandler={onUploadPhoto}
                                     className={classNames({
                                         'p-invalid': submitted && !product.photoUrl
                                     })}
                                 />
-                                {submitted && !product.photoUrl && <small className="p-invalid">Photo is required.</small>}
 
                                 <Divider layout="horizontal" align="center">
                                     <b>OR</b>
@@ -687,16 +694,15 @@ const Crud = () => {
                                 <div className="field">
                                     <label htmlFor="photoUrl">PhotoUrl</label>
                                     <InputText
-                                        id="name"
-                                        value={product.photoUrl?.toString() ?? ''}
-                                        onChange={(e) => onInputChange(e, 'photoUrl')}
+                                        id="photoUrl"
+                                        value={product.photoUrl || ''}
+                                        onChange={(e) => setProduct({ ...product, photoUrl: e.target.value })}
                                         required
                                         autoFocus
                                         className={classNames({
                                             'p-invalid': submitted && !product.photoUrl
                                         })}
                                     />
-                                    {/* {submitted && !product.title && <small className="p-invalid">Name is required.</small>} */}
                                 </div>
                             </div>
                         </div>
@@ -764,10 +770,10 @@ const Crud = () => {
                         <h5>Normal Recipe</h5>
                         <div className="field">
                             <label htmlFor="calories">Calories</label>
-                            <InputNumber
+                            <InputText
                                 id="calories"
                                 value={product.calories}
-                                onValueChange={(e) => onInputNumberChange(e, 'calories')}
+                                onChange={(e) => onInputChange(e, 'calories')}
                                 className={classNames({
                                     'p-invalid': submitted && !product.calories
                                 })}
@@ -786,7 +792,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.ingredients || product.ingredients.length === 0)
+                                    'p-invalid': submitted && (!product.ingredients || product.ingredients.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && (!product.ingredients || product.ingredients.length === 0) && <small className="p-invalid">Ingredients is required.</small>}
@@ -803,7 +810,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.steps || product.steps.length === 0)
+                                    'p-invalid': submitted && (!product.steps || product.steps.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && !product.steps && product.steps?.length === 0 && <small className="p-invalid">Steps is required.</small>}
@@ -812,10 +820,10 @@ const Crud = () => {
                         <h5>Healthy Recipe</h5>
                         <div className="field">
                             <label htmlFor="healthyCalories">Calories</label>
-                            <InputNumber
+                            <InputText
                                 id="healthyCalories"
                                 value={product.healthyCalories}
-                                onValueChange={(e) => onInputNumberChange(e, 'healthyCalories')}
+                                onChange={(e) => onInputChange(e, 'healthyCalories')}
                                 className={classNames({
                                     'p-invalid': submitted && !product.healthyCalories
                                 })}
@@ -834,7 +842,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.healthyIngredients || product.healthyIngredients.length === 0)
+                                    'p-invalid': submitted && (!product.healthyIngredients || product.healthyIngredients.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && !product.healthyIngredients && product.healthyIngredients?.length === 0 && <small className="p-invalid">Ingredients is required.</small>}
@@ -851,7 +860,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.healthySteps || product.healthySteps.length === 0)
+                                    'p-invalid': submitted && (!product.healthySteps || product.healthySteps.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && !product.healthySteps && product.healthySteps?.length === 0 && <small className="p-invalid">Steps is required.</small>}
@@ -873,6 +883,13 @@ const Crud = () => {
                         <div className="flex align-items-center justify-content-center">
                             <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                             {product && <span>Are you sure you want to delete the selected products?</span>}
+                        </div>
+                    </Dialog>
+
+                    <Dialog visible={addPhotoDialog} style={{ width: '450px' }} header="Confirm" modal footer={addPhotoDialogFooter} onHide={hideAddPhotoDialog}>
+                        <div className="flex align-items-center justify-content-center">
+                            <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                            {product && <span>Are you sure you want to use this photo?</span>}
                         </div>
                     </Dialog>
                 </div>

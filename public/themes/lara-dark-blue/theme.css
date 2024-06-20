@@ -6046,4 +6046,14 @@
     background: #60a5fa;
     color: #030712;
   }
+
+  .custom-chips .p-chips-container {
+    max-width: 100%;
+    white-space: pre-wrap; /* Membuat teks tetap pada baris baru sesuai dengan panjang teks */
+    word-break: break-word; /* Memecah kata-kata yang panjang agar sesuai dengan container */
+}
+
+  .custom-chips .p-chips-token {
+    margin-bottom: 5px; /* Jarak antar item chip */
+}
 }
