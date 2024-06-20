@@ -389,7 +389,7 @@ const Crud = () => {
             }
     
             // Filter out invalid IDs
-            const selectedRecipeIds = selectedProducts.map((product : any) => product.id).filter(id => id);
+            const selectedRecipeIds = selectedProducts.map((product: { id: string }) => product.id).filter((id: string) => id);
             
             // Ensure there are valid IDs to delete
             if (selectedRecipeIds.length === 0) {
@@ -428,11 +428,7 @@ const Crud = () => {
     };
     
 
-    const onCategoryChange = (e: RadioButtonChangeEvent) => {
-        let _product = { ...product };
-        _product['category'] = e.value;
-        setProduct(_product);
-    };
+
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
         const val = (e.target && e.target.value) || '';
@@ -443,7 +439,7 @@ const Crud = () => {
     };
 
     const onInputNumberChange = (e: InputNumberValueChangeEvent, name: string) => {
-        const val = e.value || 0;
+        const val = (e.target && e.target.value) || 0;
         let _product = { ...product };
         _product[`${name}`] = val;
 
@@ -531,23 +527,6 @@ const Crud = () => {
         );
     };
 
-    const ratingBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Reviews</span>
-                <Rating value={rowData.rating} readOnly cancel={false} />
-            </>
-        );
-    };
-
-    const statusBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Status</span>
-                <span className={`product-badge status-${rowData.inventoryStatus?.toLowerCase()}`}>{rowData.inventoryStatus}</span>
-            </>
-        );
-    };
 
     const actionBodyTemplate = (rowData: Demo.Product) => {
         return (
@@ -647,11 +626,6 @@ const Crud = () => {
         setProduct(_product);
     };
 
-    const triggerFileUpload = () => {
-        if (fileUploadRef.current) {
-            fileUploadRef.current.fileInput.click(); // Paksa buka dialog file picker
-        }
-    };
 
     return (
         <div className="grid crud-demo">
