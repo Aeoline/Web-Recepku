@@ -1,0 +1,23 @@
+.custom-chips .p-chips-container {
+    display: flex !important;
+    flex-wrap: wrap !important; /* Membuat kontainer fleksibel dan membungkus konten */
+    white-space: normal !important; /* Mengubah white-space menjadi normal */
+    word-break: break-word !important; /* Memastikan teks memecah baris sesuai dengan container */
+    font-size: 1.2em !important; /* Membesarkan ukuran font */
+}
+
+.custom-chips .p-chips-token {
+    margin-bottom: 5px !important; /* Jarak antar item chip */
+    max-width: 100% !important; /* Membuat setiap token menggunakan lebar maksimal */
+    padding: 5px 10px !important; /* Menambah padding dalam token */
+}
+
+.custom-chips .p-chips-token-label {
+    white-space: normal !important; /* Mengubah white-space menjadi normal untuk label */
+    word-break: keep-all !important; /* Menghindari pemisahan kata */
+    font-size: 1em !important; /* Menjaga ukuran font label tetap konsisten */
+}
+
+.custom-chips .p-chips-token-icon {
+    display: none !important; /* Menyembunyikan ikon 'x' */
+}

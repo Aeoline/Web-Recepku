@@ -25,6 +25,7 @@ import { Divider } from 'primereact/divider';
 import { Chips } from 'primereact/chips';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import './styles.css';
 
 type InputValue = { value: boolean; label: string };
 
@@ -795,7 +796,7 @@ const Crud = () => {
                         <h5>Normal Recipe</h5>
                         <div className="field">
                             <label htmlFor="calories">Calories</label>
-                            <InputTextarea
+                            <InputText
                                 id="calories"
                                 value={product.calories}
                                 onChange={(e) => onInputChange(e, 'calories')}
@@ -817,7 +818,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.ingredients || product.ingredients.length === 0)
+                                    'p-invalid': submitted && (!product.ingredients || product.ingredients.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && (!product.ingredients || product.ingredients.length === 0) && <small className="p-invalid">Ingredients is required.</small>}
@@ -834,7 +836,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.steps || product.steps.length === 0)
+                                    'p-invalid': submitted && (!product.steps || product.steps.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && !product.steps && product.steps?.length === 0 && <small className="p-invalid">Steps is required.</small>}
@@ -843,7 +846,7 @@ const Crud = () => {
                         <h5>Healthy Recipe</h5>
                         <div className="field">
                             <label htmlFor="healthyCalories">Calories</label>
-                            <InputTextarea
+                            <InputText
                                 id="healthyCalories"
                                 value={product.healthyCalories}
                                 onChange={(e) => onInputChange(e, 'healthyCalories')}
@@ -865,7 +868,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.healthyIngredients || product.healthyIngredients.length === 0)
+                                    'p-invalid': submitted && (!product.healthyIngredients || product.healthyIngredients.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && !product.healthyIngredients && product.healthyIngredients?.length === 0 && <small className="p-invalid">Ingredients is required.</small>}
@@ -882,7 +886,8 @@ const Crud = () => {
                                 }}
                                 required
                                 className={classNames({
-                                    'p-invalid': submitted && (!product.healthySteps || product.healthySteps.length === 0)
+                                    'p-invalid': submitted && (!product.healthySteps || product.healthySteps.length === 0),
+                                    'custom-chips': true
                                 })}
                             />
                             {submitted && !product.healthySteps && product.healthySteps?.length === 0 && <small className="p-invalid">Steps is required.</small>}
