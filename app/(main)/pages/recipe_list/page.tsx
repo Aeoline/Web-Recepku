@@ -227,12 +227,12 @@ const Crud = () => {
                         toast.current?.show({
                             severity: 'success',
                             summary: 'Successful',
-                            detail: 'Product Updated',
+                            detail: 'Recipe Updated',
                             life: 3000
                         });
-                        window.location.reload(); // Reload halaman setelah produk berhasil diperbarui
+                        // window.location.reload(); // Reload halaman setelah produk berhasil diperbarui
                     } else {
-                        throw new Error('Failed to update product');
+                        throw new Error('Failed to update recipe');
                     }
                 })
                 .catch((error) => {
@@ -240,7 +240,7 @@ const Crud = () => {
                     toast.current?.show({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to update product',
+                        detail: 'Failed to update recipe',
                         life: 3000
                     });
                 });
@@ -260,14 +260,14 @@ const Crud = () => {
                                 if (Array.isArray(items)) {
                                     setProducts(items);
                                 } else {
-                                    console.error('Fetched products are not an array:', items);
+                                    console.error('Fetched recipes are not an array:', items);
                                     setProducts([]);
                                 }
                                 setRecipeDialog(false);
                                 toast.current?.show({
                                     severity: 'success',
                                     summary: 'Successful',
-                                    detail: 'Product Created',
+                                    detail: 'Recipe Created',
                                     life: 3000
                                 });
                                 window.location.reload(); // Reload halaman setelah produk berhasil dibuat
@@ -277,12 +277,12 @@ const Crud = () => {
                                 toast.current?.show({
                                     severity: 'error',
                                     summary: 'Error',
-                                    detail: 'Failed to fetch products',
+                                    detail: 'Failed to fetch recipes',
                                     life: 3000
                                 });
                             });
                     } else {
-                        throw new Error('Failed to create product');
+                        throw new Error('Failed to create recipe');
                     }
                 })
                 .catch((error) => {
@@ -290,7 +290,7 @@ const Crud = () => {
                     toast.current?.show({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to create product',
+                        detail: 'Failed to create recipe',
                         life: 3000
                     });
                 });
@@ -330,11 +330,11 @@ const Crud = () => {
                     toast.current?.show({
                         severity: 'success',
                         summary: 'Successful',
-                        detail: 'Product Deleted',
+                        detail: 'Recipe Deleted',
                         life: 3000
                     });
                 } else {
-                    throw new Error('Failed to delete product');
+                    throw new Error('Failed to delete recipe');
                 }
             })
             .catch((error) => {
@@ -342,7 +342,7 @@ const Crud = () => {
                 toast.current?.show({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to delete product',
+                    detail: 'Failed to delete recipe',
                     life: 3000
                 });
             });

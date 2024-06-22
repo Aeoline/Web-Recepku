@@ -141,16 +141,18 @@ const Crud = () => {
                     if (response.ok) {
                         const index = findIndexById(product.uid);
                         _products[index] = _product;
+                        setProduct(_products);
                         setProductDialog(false);
-                        setProduct('emptyProduct');
+                        
                         toast.current?.show({
                             severity: 'success',
                             summary: 'Successful',
-                            detail: 'Product Updated',
+                            detail: 'User Updated',
                             life: 3000
                         });
+                        window.location.reload();
                     } else {
-                        throw new Error('Failed to update product');
+                        throw new Error('Failed to update user');
                     }
                 })
                 .catch((error) => {
@@ -158,7 +160,7 @@ const Crud = () => {
                     toast.current?.show({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to update product',
+                        detail: 'Failed to update user',
                         life: 3000
                     });
                 });
